@@ -13527,3 +13527,28 @@ $(function () {
         })),
       $scrollable.find(".aos-init").removeClass("aos-animate");
   });
+
+  function updateVideoSource() {
+    const video = document.getElementById("responsiveVideo");
+    const source = document.getElementById("videoSource");
+
+    if (window.innerWidth <= 576) {
+      source.src =
+        "./source/Gen_3_Alpha_Turbo_3256521574,_It_is_necessary_that,_DALL·E_2024.mp4";
+      video.style.top = "unset";
+      video.style.left = "unset";
+      video.style.transform = "unset";
+    } else {
+      source.src =
+        "./source/Gen_3_Alpha_Turbo_2348255986,_Do_the_action_inside,_imagepng_51.mp4";
+      video.style.top = "50%";
+      video.style.left = "50%";
+      video.style.transform = "translate(-50%, -50%)";
+    }
+
+    video.load();
+  }
+
+  updateVideoSource();
+
+  window.addEventListener("resize", updateVideoSource);

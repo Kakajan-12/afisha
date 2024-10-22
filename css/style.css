@@ -10812,6 +10812,7 @@ a:hover {
   background-image: none;
   background-color: transparent;
   border-color: #fff;
+  background: rgba(0, 0, 0, 0.5);
 }
 .btn-outline:active,
 .btn-outline:focus:active,
@@ -10884,7 +10885,7 @@ a:hover {
     min-height: calc(100% - 30px);
   }
 }
-video {
+#responsiveVideo {
   min-width: 100%;
   min-height: 100%;
   width: auto;
@@ -10893,7 +10894,7 @@ video {
 }
 
 @media (max-width:768px) {
-  video {
+  #responsiveVideo {
   min-width: unset;
   min-height: unset;
   width: auto;
@@ -11798,4 +11799,10 @@ label {
   animation-name: slide-bg-1;
   -webkit-animation-delay: 3s;
   animation-delay: 3s;
+}
+
+.link{
+  display: block;
+  width: 100%;
+  font-size: 22px;
 }
