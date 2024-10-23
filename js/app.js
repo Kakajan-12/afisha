@@ -14166,7 +14166,8 @@ window.onload = function () {
     const source = document.getElementById("videoSource");
 
     if (window.innerWidth <= 576) {
-      source.src = "./source/mobile-version.webm";
+      source.src =
+        "./source/Gen_3_Alpha_Turbo_3256521574,_It_is_necessary_that,_DALL·E_2024.mp4";
       video.style.top = "unset";
       video.style.left = "unset";
       video.style.transform = "unset";
