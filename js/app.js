@@ -1,3 +1,399 @@
+/*! 
+ Fluid 
+ 1.0.0 
+ Surjith S M 
+ http://themeforest.net/licenses 
+ 2017-08-09 
+ */
+function ssc_init() {
+  if (document.body) {
+    var e = document.body,
+      t = document.documentElement,
+      n = window.innerHeight,
+      i = e.scrollHeight;
+    if (
+      ((ssc_root = document.compatMode.indexOf("CSS") >= 0 ? t : e),
+      (ssc_activeElement = e),
+      (ssc_initdone = !0),
+      top != self)
+    )
+      ssc_frame = !0;
+    else if (
+      i > n &&
+      (e.offsetHeight <= n || t.offsetHeight <= n) &&
+      ssc_root.offsetHeight <= n
+    ) {
+      var o = document.createElement("div");
+      (o.style.clear = "both"), e.appendChild(o);
+    }
+    ssc_fixedback ||
+      ((e.style.backgroundAttachment = "scroll"),
+      (t.style.backgroundAttachment = "scroll")),
+      ssc_keyboardsupport && ssc_addEvent("keydown", ssc_keydown);
+  }
+}
+function ssc_scrollArray(e, t, n, i) {
+  if (
+    (i || (i = 1e3),
+    ssc_directionCheck(t, n),
+    ssc_que.push({
+      x: t,
+      y: n,
+      lastX: 0 > t ? 0.99 : -0.99,
+      lastY: 0 > n ? 0.99 : -0.99,
+      start: +new Date(),
+    }),
+    !ssc_pending)
+  ) {
+    var o = function () {
+      for (var r = +new Date(), s = 0, a = 0, l = 0; l < ssc_que.length; l++) {
+        var c = ssc_que[l],
+          u = r - c.start,
+          d = u >= ssc_animtime,
+          f = d ? 1 : u / ssc_animtime;
+        ssc_pulseAlgorithm && (f = ssc_pulse(f));
+        var h = (c.x * f - c.lastX) >> 0,
+          p = (c.y * f - c.lastY) >> 0;
+        (s += h),
+          (a += p),
+          (c.lastX += h),
+          (c.lastY += p),
+          d && (ssc_que.splice(l, 1), l--);
+      }
+      if (t) {
+        var g = e.scrollLeft;
+        (e.scrollLeft += s), s && e.scrollLeft === g && (t = 0);
+      }
+      if (n) {
+        var m = e.scrollTop;
+        (e.scrollTop += a), a && e.scrollTop === m && (n = 0);
+      }
+      t || n || (ssc_que = []),
+        ssc_que.length
+          ? setTimeout(o, i / ssc_framerate + 1)
+          : (ssc_pending = !1);
+    };
+    setTimeout(o, 0), (ssc_pending = !0);
+  }
+}
+function ssc_wheel(e) {
+  ssc_initdone || ssc_init();
+  var t = e.target,
+    n = ssc_overflowingAncestor(t);
+  if (
+    !n ||
+    e.defaultPrevented ||
+    ssc_isNodeName(ssc_activeElement, "embed") ||
+    (ssc_isNodeName(t, "embed") && /\.pdf/i.test(t.src))
+  )
+    return !0;
+  var i = e.wheelDeltaX || 0,
+    o = e.wheelDeltaY || 0;
+  i || o || (o = e.wheelDelta || 0),
+    Math.abs(i) > 1.2 && (i *= ssc_stepsize / 120),
+    Math.abs(o) > 1.2 && (o *= ssc_stepsize / 120),
+    ssc_scrollArray(n, -i, -o),
+    e.preventDefault();
+}
+function ssc_keydown(e) {
+  var t = e.target,
+    n = e.ctrlKey || e.altKey || e.metaKey;
+  if (
+    /input|textarea|embed/i.test(t.nodeName) ||
+    t.isContentEditable ||
+    e.defaultPrevented ||
+    n
+  )
+    return !0;
+  if (ssc_isNodeName(t, "button") && e.keyCode === ssc_key.spacebar) return !0;
+  var i = 0,
+    o = 0,
+    r = ssc_overflowingAncestor(ssc_activeElement),
+    s = r.clientHeight;
+  switch ((r == document.body && (s = window.innerHeight), e.keyCode)) {
+    case ssc_key.up:
+      o = -ssc_arrowscroll;
+      break;
+    case ssc_key.down:
+      o = ssc_arrowscroll;
+      break;
+    case ssc_key.spacebar:
+      o = -(e.shiftKey ? 1 : -1) * s * 0.9;
+      break;
+    case ssc_key.pageup:
+      o = 0.9 * -s;
+      break;
+    case ssc_key.pagedown:
+      o = 0.9 * s;
+      break;
+    case ssc_key.home:
+      o = -r.scrollTop;
+      break;
+    case ssc_key.end:
+      var a = r.scrollHeight - r.scrollTop - s;
+      o = a > 0 ? a + 10 : 0;
+      break;
+    case ssc_key.left:
+      i = -ssc_arrowscroll;
+      break;
+    case ssc_key.right:
+      i = ssc_arrowscroll;
+      break;
+    default:
+      return !0;
+  }
+  ssc_scrollArray(r, i, o), e.preventDefault();
+}
+function ssc_mousedown(e) {
+  ssc_activeElement = e.target;
+}
+function ssc_setCache(e, t) {
+  for (var n = e.length; n--; ) ssc_cache[ssc_uniqueID(e[n])] = t;
+  return t;
+}
+function ssc_overflowingAncestor(e) {
+  var t = [],
+    n = ssc_root.scrollHeight;
+  do {
+    var i = ssc_cache[ssc_uniqueID(e)];
+    if (i) return ssc_setCache(t, i);
+    if ((t.push(e), n === e.scrollHeight)) {
+      if (!ssc_frame || ssc_root.clientHeight + 10 < n)
+        return ssc_setCache(t, document.body);
+    } else if (
+      e.clientHeight + 10 < e.scrollHeight &&
+      ((overflow = getComputedStyle(e, "").getPropertyValue("overflow")),
+      "scroll" === overflow || "auto" === overflow)
+    )
+      return ssc_setCache(t, e);
+  } while ((e = e.parentNode));
+}
+function ssc_addEvent(e, t, n) {
+  window.addEventListener(e, t, n || !1);
+}
+function ssc_removeEvent(e, t, n) {
+  window.removeEventListener(e, t, n || !1);
+}
+function ssc_isNodeName(e, t) {
+  return e.nodeName.toLowerCase() === t.toLowerCase();
+}
+function ssc_directionCheck(e, t) {
+  (e = e > 0 ? 1 : -1),
+    (t = t > 0 ? 1 : -1),
+    (ssc_direction.x !== e || ssc_direction.y !== t) &&
+      ((ssc_direction.x = e), (ssc_direction.y = t), (ssc_que = []));
+}
+function ssc_pulse_(e) {
+  var t, n, i;
+  return (
+    1 > (e *= ssc_pulseScale)
+      ? (t = e - (1 - Math.exp(-e)))
+      : ((n = Math.exp(-1)),
+        (e -= 1),
+        (i = 1 - Math.exp(-e)),
+        (t = n + i * (1 - n))),
+    t * ssc_pulseNormalize
+  );
+}
+function ssc_pulse(e) {
+  return e >= 1
+    ? 1
+    : 0 >= e
+    ? 0
+    : (1 == ssc_pulseNormalize && (ssc_pulseNormalize /= ssc_pulse_(1)),
+      ssc_pulse_(e));
+}
+function loadGoogleMapsAPI() {
+  var e = document.createElement("script"),
+    t = document.getElementById("gmaps").getAttribute("data-maps-apikey");
+  (e.src = "https://maps.googleapis.com/maps/api/js?callback=loadMap&key=" + t),
+    (e.type = "text/javascript"),
+    document.getElementsByTagName("body")[0].appendChild(e);
+}
+function loadMap() {
+  var e = $("#gmaps"),
+    t = e.data("lat") || "40.6700",
+    n = e.data("lon") || "-73.9400",
+    i = {
+      zoom: e.data("zoom") || "12",
+      center: new google.maps.LatLng(t, n),
+      scrollwheel: !1,
+      styles: [
+        {
+          featureType: "all",
+          elementType: "labels.text.fill",
+          stylers: [
+            {
+              saturation: 36,
+            },
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 40,
+            },
+          ],
+        },
+        {
+          featureType: "all",
+          elementType: "labels.text.stroke",
+          stylers: [
+            {
+              visibility: "on",
+            },
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 16,
+            },
+          ],
+        },
+        {
+          featureType: "all",
+          elementType: "labels.icon",
+          stylers: [
+            {
+              visibility: "off",
+            },
+          ],
+        },
+        {
+          featureType: "administrative",
+          elementType: "geometry.fill",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 20,
+            },
+          ],
+        },
+        {
+          featureType: "administrative",
+          elementType: "geometry.stroke",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 17,
+            },
+            {
+              weight: 1.2,
+            },
+          ],
+        },
+        {
+          featureType: "landscape",
+          elementType: "geometry",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 20,
+            },
+          ],
+        },
+        {
+          featureType: "poi",
+          elementType: "geometry",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 21,
+            },
+          ],
+        },
+        {
+          featureType: "road.highway",
+          elementType: "geometry.fill",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 17,
+            },
+          ],
+        },
+        {
+          featureType: "road.highway",
+          elementType: "geometry.stroke",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 29,
+            },
+            {
+              weight: 0.2,
+            },
+          ],
+        },
+        {
+          featureType: "road.arterial",
+          elementType: "geometry",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 18,
+            },
+          ],
+        },
+        {
+          featureType: "road.local",
+          elementType: "geometry",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 16,
+            },
+          ],
+        },
+        {
+          featureType: "transit",
+          elementType: "geometry",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 19,
+            },
+          ],
+        },
+        {
+          featureType: "water",
+          elementType: "geometry",
+          stylers: [
+            {
+              color: "#000000",
+            },
+            {
+              lightness: 17,
+            },
+          ],
+        },
+      ],
+    },
+    o = document.getElementById("gmaps"),
+    r = new google.maps.Map(o, i);
+  new google.maps.Marker({
+    position: new google.maps.LatLng(t, n),
+    map: r,
+    title: "We are here!",
+  });
+}
 if (
   ((function (e, t) {
     "use strict";
@@ -458,7 +854,9 @@ if (
     function q(e, t) {
       var n,
         i = 0,
-        o = { height: e };
+        o = {
+          height: e,
+        };
       for (t = t ? 1 : 0; i < 4; i += 2 - t)
         (n = Re[i]), (o["margin" + n] = o["padding" + n] = e);
       return t && (o.opacity = o.width = e), o;
@@ -521,7 +919,10 @@ if (
           props: pe.extend({}, t),
           opts: pe.extend(
             !0,
-            { specialEasing: {}, easing: pe.easing._default },
+            {
+              specialEasing: {},
+              easing: pe.easing._default,
+            },
             n
           ),
           originalProperties: t,
@@ -568,7 +969,13 @@ if (
           .done(c.opts.done, c.opts.complete)
           .fail(c.opts.fail)
           .always(c.opts.always),
-        pe.fx.timer(pe.extend(l, { elem: e, anim: c, queue: c.opts.queue })),
+        pe.fx.timer(
+          pe.extend(l, {
+            elem: e,
+            anim: c,
+            queue: c.opts.queue,
+          })
+        ),
         c
       );
     }
@@ -699,7 +1106,10 @@ if (
                   };
                 }
           }
-      return { state: "success", data: t };
+      return {
+        state: "success",
+        data: t,
+      };
     }
     var ee = [],
       te = e.document,
@@ -1191,9 +1601,9 @@ if (
                 a > 1 && h(u),
                 a > 1 &&
                   d(
-                    e
-                      .slice(0, a - 1)
-                      .concat({ value: " " === e[a - 2].type ? "*" : "" })
+                    e.slice(0, a - 1).concat({
+                      value: " " === e[a - 2].type ? "*" : "",
+                    })
                   ).replace(re, "$1"),
                 n,
                 a < i && v(e.slice(a, i)),
@@ -1373,7 +1783,7 @@ if (
         we = function (e, t) {
           return t
             ? "\0" === e
-              ? "пїЅ"
+              ? "�"
               : e.slice(0, -1) +
                 "\\" +
                 e.charCodeAt(e.length - 1).toString(16) +
@@ -1387,7 +1797,10 @@ if (
           function (e) {
             return !0 === e.disabled && ("form" in e || "label" in e);
           },
-          { dir: "parentNode", next: "legend" }
+          {
+            dir: "parentNode",
+            next: "legend",
+          }
         );
       try {
         K.apply((X = Q.call(M.childNodes)), M.childNodes),
@@ -1727,10 +2140,20 @@ if (
             attrHandle: {},
             find: {},
             relative: {
-              ">": { dir: "parentNode", first: !0 },
-              " ": { dir: "parentNode" },
-              "+": { dir: "previousSibling", first: !0 },
-              "~": { dir: "previousSibling" },
+              ">": {
+                dir: "parentNode",
+                first: !0,
+              },
+              " ": {
+                dir: "parentNode",
+              },
+              "+": {
+                dir: "previousSibling",
+                first: !0,
+              },
+              "~": {
+                dir: "previousSibling",
+              },
             },
             preFilter: {
               ATTR: function (e) {
@@ -2055,13 +2478,22 @@ if (
               }),
             },
           }).pseudos.nth = T.pseudos.eq);
-      for (b in { radio: !0, checkbox: !0, file: !0, password: !0, image: !0 })
+      for (b in {
+        radio: !0,
+        checkbox: !0,
+        file: !0,
+        password: !0,
+        image: !0,
+      })
         T.pseudos[b] = (function (e) {
           return function (t) {
             return "input" === t.nodeName.toLowerCase() && t.type === e;
           };
         })(b);
-      for (b in { submit: !0, reset: !0 })
+      for (b in {
+        submit: !0,
+        reset: !0,
+      })
         T.pseudos[b] = (function (e) {
           return function (t) {
             var n = t.nodeName.toLowerCase();
@@ -2088,13 +2520,20 @@ if (
                 (i = !1),
                 (o = ae.exec(a)) &&
                   ((i = o.shift()),
-                  r.push({ value: i, type: o[0].replace(re, " ") }),
+                  r.push({
+                    value: i,
+                    type: o[0].replace(re, " "),
+                  }),
                   (a = a.slice(i.length)));
               for (s in T.filter)
                 !(o = de[s].exec(a)) ||
                   (c[s] && !(o = c[s](o))) ||
                   ((i = o.shift()),
-                  r.push({ value: i, type: s, matches: o }),
+                  r.push({
+                    value: i,
+                    type: s,
+                    matches: o,
+                  }),
                   (a = a.slice(i.length)));
               if (!i) break;
             }
@@ -2324,7 +2763,12 @@ if (
     }).prototype = pe.fn),
       (Se = pe(te));
     var xe = /^(?:parents|prev(?:Until|All))/,
-      Ae = { children: !0, contents: !0, next: !0, prev: !0 };
+      Ae = {
+        children: !0,
+        contents: !0,
+        next: !0,
+        prev: !0,
+      };
     pe.fn.extend({
       has: function (e) {
         var t = pe(e, this),
@@ -3196,11 +3640,19 @@ if (
                       ? pe(o, this).index(c) > -1
                       : pe.find(o, this, null, [c]).length),
                   s[o] && r.push(i);
-              r.length && a.push({ elem: c, handlers: r });
+              r.length &&
+                a.push({
+                  elem: c,
+                  handlers: r,
+                });
             }
         return (
           (c = this),
-          l < t.length && a.push({ elem: c, handlers: t.slice(l) }),
+          l < t.length &&
+            a.push({
+              elem: c,
+              handlers: t.slice(l),
+            }),
           a
         );
       },
@@ -3229,7 +3681,9 @@ if (
         return e[pe.expando] ? e : new pe.Event(e);
       },
       special: {
-        load: { noBubble: !0 },
+        load: {
+          noBubble: !0,
+        },
         focus: {
           trigger: function () {
             if (this !== _() && this.focus) return this.focus(), !1;
@@ -3650,8 +4104,15 @@ if (
     })();
     var at = /^(none|table(?!-c[ea]).+)/,
       lt = /^--/,
-      ct = { position: "absolute", visibility: "hidden", display: "block" },
-      ut = { letterSpacing: "0", fontWeight: "400" },
+      ct = {
+        position: "absolute",
+        visibility: "hidden",
+        display: "block",
+      },
+      ut = {
+        letterSpacing: "0",
+        fontWeight: "400",
+      },
       dt = ["Webkit", "Moz", "ms"],
       ft = te.createElement("div").style;
     pe.extend({
@@ -3680,7 +4141,9 @@ if (
         zIndex: !0,
         zoom: !0,
       },
-      cssProps: { float: "cssFloat" },
+      cssProps: {
+        float: "cssFloat",
+      },
       style: function (e, t, n, i) {
         if (e && 3 !== e.nodeType && 8 !== e.nodeType && e.style) {
           var o,
@@ -3765,25 +4228,40 @@ if (
           return (
             (parseFloat(N(e, "marginLeft")) ||
               e.getBoundingClientRect().left -
-                qe(e, { marginLeft: 0 }, function () {
-                  return e.getBoundingClientRect().left;
-                })) + "px"
+                qe(
+                  e,
+                  {
+                    marginLeft: 0,
+                  },
+                  function () {
+                    return e.getBoundingClientRect().left;
+                  }
+                )) + "px"
           );
       })),
-      pe.each({ margin: "", padding: "", border: "Width" }, function (e, t) {
-        (pe.cssHooks[e + t] = {
-          expand: function (n) {
-            for (
-              var i = 0, o = {}, r = "string" == typeof n ? n.split(" ") : [n];
-              i < 4;
-              i++
-            )
-              o[e + Re[i] + t] = r[i] || r[i - 2] || r[0];
-            return o;
-          },
-        }),
-          ot.test(e) || (pe.cssHooks[e + t].set = F);
-      }),
+      pe.each(
+        {
+          margin: "",
+          padding: "",
+          border: "Width",
+        },
+        function (e, t) {
+          (pe.cssHooks[e + t] = {
+            expand: function (n) {
+              for (
+                var i = 0,
+                  o = {},
+                  r = "string" == typeof n ? n.split(" ") : [n];
+                i < 4;
+                i++
+              )
+                o[e + Re[i] + t] = r[i] || r[i - 2] || r[0];
+              return o;
+            },
+          }),
+            ot.test(e) || (pe.cssHooks[e + t].set = F);
+        }
+      ),
       pe.fn.extend({
         css: function (e, t) {
           return Ne(
@@ -3977,7 +4455,9 @@ if (
               l ||
                 (m
                   ? "hidden" in m && (g = m.hidden)
-                  : (m = $e.access(e, "fxshow", { display: c })),
+                  : (m = $e.access(e, "fxshow", {
+                      display: c,
+                    })),
                 r && (m.hidden = !g),
                 g && v([e], !0),
                 f.done(function () {
@@ -4021,11 +4501,14 @@ if (
       }),
       pe.fn.extend({
         fadeTo: function (e, t, n, i) {
-          return this.filter(We)
-            .css("opacity", 0)
-            .show()
-            .end()
-            .animate({ opacity: t }, e, n, i);
+          return this.filter(We).css("opacity", 0).show().end().animate(
+            {
+              opacity: t,
+            },
+            e,
+            n,
+            i
+          );
         },
         animate: function (e, t, n, i) {
           var o = pe.isEmptyObject(e),
@@ -4103,9 +4586,15 @@ if (
           slideDown: q("show"),
           slideUp: q("hide"),
           slideToggle: q("toggle"),
-          fadeIn: { opacity: "show" },
-          fadeOut: { opacity: "hide" },
-          fadeToggle: { opacity: "toggle" },
+          fadeIn: {
+            opacity: "show",
+          },
+          fadeOut: {
+            opacity: "hide",
+          },
+          fadeToggle: {
+            opacity: "toggle",
+          },
         },
         function (e, t) {
           pe.fn[e] = function (e, n, i) {
@@ -4132,7 +4621,11 @@ if (
       (pe.fx.stop = function () {
         pt = null;
       }),
-      (pe.fx.speeds = { slow: 600, fast: 200, _default: 400 }),
+      (pe.fx.speeds = {
+        slow: 600,
+        fast: 200,
+        _default: 400,
+      }),
       (pe.fn.delay = function (t, n) {
         return (
           (t = pe.fx ? pe.fx.speeds[t] || t : t),
@@ -4274,7 +4767,10 @@ if (
             },
           },
         },
-        propFix: { for: "htmlFor", class: "className" },
+        propFix: {
+          for: "htmlFor",
+          class: "className",
+        },
       }),
       fe.optSelected ||
         (pe.propHooks.selected = {
@@ -4560,7 +5056,10 @@ if (
         }
       },
       simulate: function (e, t, n) {
-        var i = pe.extend(new pe.Event(), n, { type: e, isSimulated: !0 });
+        var i = pe.extend(new pe.Event(), n, {
+          type: e,
+          isSimulated: !0,
+        });
         pe.event.trigger(i, null, t);
       },
     }),
@@ -4594,25 +5093,32 @@ if (
       }),
       (fe.focusin = "onfocusin" in e),
       fe.focusin ||
-        pe.each({ focus: "focusin", blur: "focusout" }, function (e, t) {
-          var n = function (e) {
-            pe.event.simulate(t, e.target, pe.event.fix(e));
-          };
-          pe.event.special[t] = {
-            setup: function () {
-              var i = this.ownerDocument || this,
-                o = $e.access(i, t);
-              o || i.addEventListener(e, n, !0), $e.access(i, t, (o || 0) + 1);
-            },
-            teardown: function () {
-              var i = this.ownerDocument || this,
-                o = $e.access(i, t) - 1;
-              o
-                ? $e.access(i, t, o)
-                : (i.removeEventListener(e, n, !0), $e.remove(i, t));
-            },
-          };
-        });
+        pe.each(
+          {
+            focus: "focusin",
+            blur: "focusout",
+          },
+          function (e, t) {
+            var n = function (e) {
+              pe.event.simulate(t, e.target, pe.event.fix(e));
+            };
+            pe.event.special[t] = {
+              setup: function () {
+                var i = this.ownerDocument || this,
+                  o = $e.access(i, t);
+                o || i.addEventListener(e, n, !0),
+                  $e.access(i, t, (o || 0) + 1);
+              },
+              teardown: function () {
+                var i = this.ownerDocument || this,
+                  o = $e.access(i, t) - 1;
+                o
+                  ? $e.access(i, t, o)
+                  : (i.removeEventListener(e, n, !0), $e.remove(i, t));
+              },
+            };
+          }
+        );
     var _t = e.location,
       Et = pe.now(),
       St = /\?/;
@@ -4676,9 +5182,15 @@ if (
                 ? null
                 : Array.isArray(n)
                 ? pe.map(n, function (e) {
-                    return { name: t.name, value: e.replace(xt, "\r\n") };
+                    return {
+                      name: t.name,
+                      value: e.replace(xt, "\r\n"),
+                    };
                   })
-                : { name: t.name, value: n.replace(xt, "\r\n") };
+                : {
+                    name: t.name,
+                    value: n.replace(xt, "\r\n"),
+                  };
             })
             .get();
         },
@@ -4714,7 +5226,11 @@ if (
             xml: "application/xml, text/xml",
             json: "application/json, text/javascript",
           },
-          contents: { xml: /\bxml\b/, html: /\bhtml/, json: /\bjson\b/ },
+          contents: {
+            xml: /\bxml\b/,
+            html: /\bhtml/,
+            json: /\bjson\b/,
+          },
           responseFields: {
             xml: "responseXML",
             text: "responseText",
@@ -4726,7 +5242,10 @@ if (
             "text json": JSON.parse,
             "text xml": pe.parseXML,
           },
-          flatOptions: { url: !0, context: !0 },
+          flatOptions: {
+            url: !0,
+            context: !0,
+          },
         },
         ajaxSetup: function (e, t) {
           return t ? Q(Q(e, pe.ajaxSettings), t) : Q(pe.ajaxSettings, e);
@@ -4934,7 +5453,13 @@ if (
             pe.isFunction(n) && ((o = o || i), (i = n), (n = void 0)),
             pe.ajax(
               pe.extend(
-                { url: e, type: t, dataType: o, data: n, success: i },
+                {
+                  url: e,
+                  type: t,
+                  dataType: o,
+                  data: n,
+                  success: i,
+                },
                 pe.isPlainObject(e) && e
               )
             )
@@ -5009,7 +5534,10 @@ if (
           return new e.XMLHttpRequest();
         } catch (e) {}
       });
-    var Wt = { 0: 200, 1223: 204 },
+    var Wt = {
+        0: 200,
+        1223: 204,
+      },
       qt = pe.ajaxSettings.xhr();
     (fe.cors = !!qt && "withCredentials" in qt),
       (fe.ajax = qt = !!qt),
@@ -5053,8 +5581,12 @@ if (
                           a.statusText,
                           "text" !== (a.responseType || "text") ||
                             "string" != typeof a.responseText
-                            ? { binary: a.response }
-                            : { text: a.responseText },
+                            ? {
+                                binary: a.response,
+                              }
+                            : {
+                                text: a.responseText,
+                              },
                           a.getAllResponseHeaders()
                         ));
                 };
@@ -5089,7 +5621,9 @@ if (
           script:
             "text/javascript, application/javascript, application/ecmascript, application/x-ecmascript",
         },
-        contents: { script: /\b(?:java|ecma)script\b/ },
+        contents: {
+          script: /\b(?:java|ecma)script\b/,
+        },
         converters: {
           "text script": function (e) {
             return pe.globalEval(e), e;
@@ -5105,7 +5639,10 @@ if (
           return {
             send: function (i, o) {
               (t = pe("<script>")
-                .prop({ charset: e.scriptCharset, src: e.url })
+                .prop({
+                  charset: e.scriptCharset,
+                  src: e.url,
+                })
                 .on(
                   "load error",
                   (n = function (e) {
@@ -5214,7 +5751,12 @@ if (
             : t && "object" == typeof t && (o = "POST"),
           s.length > 0 &&
             pe
-              .ajax({ url: e, type: o || "GET", dataType: "html", data: t })
+              .ajax({
+                url: e,
+                type: o || "GET",
+                dataType: "html",
+                data: t,
+              })
               .done(function (e) {
                 (r = arguments),
                   s.html(i ? pe("<div>").append(pe.parseHTML(e)).find(i) : e);
@@ -5297,7 +5839,10 @@ if (
                   top: i.top + o.pageYOffset - n.clientTop,
                   left: i.left + o.pageXOffset - n.clientLeft,
                 })
-              : { top: 0, left: 0 }
+              : {
+                  top: 0,
+                  left: 0,
+                }
             : void 0;
         },
         position: function () {
@@ -5305,7 +5850,10 @@ if (
             var e,
               t,
               n = this[0],
-              i = { top: 0, left: 0 };
+              i = {
+                top: 0,
+                left: 0,
+              };
             return (
               "fixed" === pe.css(n, "position")
                 ? (t = n.getBoundingClientRect())
@@ -5336,7 +5884,10 @@ if (
         },
       }),
       pe.each(
-        { scrollLeft: "pageXOffset", scrollTop: "pageYOffset" },
+        {
+          scrollLeft: "pageXOffset",
+          scrollTop: "pageYOffset",
+        },
         function (e, t) {
           var n = "pageYOffset" === t;
           pe.fn[e] = function (i) {
@@ -5373,42 +5924,52 @@ if (
             return (n = N(e, t)), rt.test(n) ? pe(e).position()[t] + "px" : n;
         });
       }),
-      pe.each({ Height: "height", Width: "width" }, function (e, t) {
-        pe.each(
-          { padding: "inner" + e, content: t, "": "outer" + e },
-          function (n, i) {
-            pe.fn[i] = function (o, r) {
-              var s = arguments.length && (n || "boolean" != typeof o),
-                a = n || (!0 === o || !0 === r ? "margin" : "border");
-              return Ne(
-                this,
-                function (t, n, o) {
-                  var r;
-                  return pe.isWindow(t)
-                    ? 0 === i.indexOf("outer")
-                      ? t["inner" + e]
-                      : t.document.documentElement["client" + e]
-                    : 9 === t.nodeType
-                    ? ((r = t.documentElement),
-                      Math.max(
-                        t.body["scroll" + e],
-                        r["scroll" + e],
-                        t.body["offset" + e],
-                        r["offset" + e],
-                        r["client" + e]
-                      ))
-                    : void 0 === o
-                    ? pe.css(t, n, a)
-                    : pe.style(t, n, o, a);
-                },
-                t,
-                s ? o : void 0,
-                s
-              );
-            };
-          }
-        );
-      }),
+      pe.each(
+        {
+          Height: "height",
+          Width: "width",
+        },
+        function (e, t) {
+          pe.each(
+            {
+              padding: "inner" + e,
+              content: t,
+              "": "outer" + e,
+            },
+            function (n, i) {
+              pe.fn[i] = function (o, r) {
+                var s = arguments.length && (n || "boolean" != typeof o),
+                  a = n || (!0 === o || !0 === r ? "margin" : "border");
+                return Ne(
+                  this,
+                  function (t, n, o) {
+                    var r;
+                    return pe.isWindow(t)
+                      ? 0 === i.indexOf("outer")
+                        ? t["inner" + e]
+                        : t.document.documentElement["client" + e]
+                      : 9 === t.nodeType
+                      ? ((r = t.documentElement),
+                        Math.max(
+                          t.body["scroll" + e],
+                          r["scroll" + e],
+                          t.body["offset" + e],
+                          r["offset" + e],
+                          r["client" + e]
+                        ))
+                      : void 0 === o
+                      ? pe.css(t, n, a)
+                      : pe.style(t, n, o, a);
+                  },
+                  t,
+                  s ? o : void 0,
+                  s
+                );
+              };
+            }
+          );
+        }
+      ),
       pe.fn.extend({
         bind: function (e, t, n) {
           return this.on(e, null, t, n);
@@ -5551,7 +6112,10 @@ if (
       var i = e.offsetWidth;
       n === i && (i = t.clientWidth), document.body.removeChild(t);
       var o = n - i;
-      return (D = { width: o, height: o });
+      return (D = {
+        width: o,
+        height: o,
+      });
     }
     function u() {
       var e =
@@ -5644,7 +6208,13 @@ if (
     }
     function w() {
       for (
-        var e = { top: 0, left: 0 }, t = arguments.length, n = Array(t), i = 0;
+        var e = {
+            top: 0,
+            left: 0,
+          },
+          t = arguments.length,
+          n = Array(t),
+          i = 0;
         i < t;
         i++
       )
@@ -5724,7 +6294,10 @@ if (
         };
       })(),
       E = void 0;
-    void 0 === E && (E = { modules: [] });
+    void 0 === E &&
+      (E = {
+        modules: [],
+      });
     var S = null,
       k = (function () {
         var e = 0;
@@ -5740,7 +6313,11 @@ if (
             "data-tether-id",
             k()
           ),
-          u(e.style, { top: 0, left: 0, position: "absolute" }),
+          u(e.style, {
+            top: 0,
+            left: 0,
+            position: "absolute",
+          }),
           document.body.appendChild(e),
           (S = e));
         var t = e.getAttribute("data-tether-id");
@@ -5775,7 +6352,11 @@ if (
                   arguments[3];
                 void 0 === this.bindings && (this.bindings = {}),
                   void 0 === this.bindings[e] && (this.bindings[e] = []),
-                  this.bindings[e].push({ handler: t, ctx: n, once: i });
+                  this.bindings[e].push({
+                    handler: t,
+                    ctx: n,
+                    once: i,
+                  });
               },
             },
             {
@@ -5968,8 +6549,16 @@ if (
           window.addEventListener(e, i);
         });
     })();
-    var R = { center: "center", left: "right", right: "left" },
-      W = { middle: "middle", top: "bottom", bottom: "top" },
+    var R = {
+        center: "center",
+        left: "right",
+        right: "left",
+      },
+      W = {
+        middle: "middle",
+        top: "bottom",
+        bottom: "top",
+      },
       q = {
         top: 0,
         left: 0,
@@ -5984,7 +6573,10 @@ if (
         return (
           "auto" === n && (n = R[t.left]),
           "auto" === i && (i = W[t.top]),
-          { left: n, top: i }
+          {
+            left: n,
+            top: i,
+          }
         );
       },
       B = function (e) {
@@ -5993,13 +6585,19 @@ if (
         return (
           void 0 !== q[e.left] && (t = q[e.left]),
           void 0 !== q[e.top] && (n = q[e.top]),
-          { left: t, top: n }
+          {
+            left: t,
+            top: n,
+          }
         );
       },
       U = function (e) {
         var t = e.split(" "),
           n = $(t, 2);
-        return { top: n[0], left: n[1] };
+        return {
+          top: n[0],
+          left: n[1],
+        };
       },
       V = U,
       X = (function (e) {
@@ -6300,14 +6898,24 @@ if (
                   if (0 === o && 0 === r && void 0 !== this.lastSize) {
                     var s = this.lastSize;
                     (o = s.width), (r = s.height);
-                  } else this.lastSize = { width: o, height: r };
+                  } else
+                    this.lastSize = {
+                      width: o,
+                      height: r,
+                    };
                   var u = this.cache("target-bounds", function () {
                       return e.getTargetBounds();
                     }),
                     d = u,
-                    f = T(B(this.attachment), { width: o, height: r }),
+                    f = T(B(this.attachment), {
+                      width: o,
+                      height: r,
+                    }),
                     h = T(B(n), d),
-                    p = T(this.offset, { width: o, height: r }),
+                    p = T(this.offset, {
+                      width: o,
+                      height: r,
+                    }),
                     g = T(this.targetOffset, d);
                   (f = w(f, p)), (h = w(h, g));
                   for (
@@ -6336,7 +6944,10 @@ if (
                       ((v = b.top), (m = b.left));
                   }
                   var C = {
-                      page: { top: v, left: m },
+                      page: {
+                        top: v,
+                        left: m,
+                      },
                       viewport: {
                         top: v - pageYOffset,
                         bottom: pageYOffset - v - r + innerHeight,
@@ -6430,7 +7041,12 @@ if (
                       r || (n[i][o] = !0);
                     }
                   }
-                  var c = { top: "", left: "", right: "", bottom: "" },
+                  var c = {
+                      top: "",
+                      left: "",
+                      right: "",
+                      bottom: "",
+                    },
                     d = function (e, n) {
                       if (
                         !1 !==
@@ -6488,7 +7104,13 @@ if (
                             (f = !0);
                         })()
                       : ((c.position = "absolute"),
-                        d({ top: !0, left: !0 }, e.page)),
+                        d(
+                          {
+                            top: !0,
+                            left: !0,
+                          },
+                          e.page
+                        )),
                     !f)
                   )
                     if (this.options.bodyElement)
@@ -6747,13 +7369,19 @@ if (
                 y.top === t.attachment.top &&
                 y.left === t.attachment.left) ||
                 (t.updateAttachClasses(y, v),
-                t.trigger("update", { attachment: y, targetAttachment: v }));
+                t.trigger("update", {
+                  attachment: y,
+                  targetAttachment: v,
+                }));
           }),
           I(function () {
             !1 !== t.options.addTargetClasses && m(t.target, g, p),
               m(t.element, g, p);
           }),
-          { top: n, left: i }
+          {
+            top: n,
+            left: i,
+          }
         );
       },
     });
@@ -6846,7 +7474,10 @@ if (
           if (this.options.shift) {
             var i = this.options.shift;
             "function" == typeof this.options.shift &&
-              (i = this.options.shift.call(this, { top: t, left: n }));
+              (i = this.options.shift.call(this, {
+                top: t,
+                left: n,
+              }));
             var o = void 0,
               r = void 0;
             if ("string" == typeof i) {
@@ -6857,7 +7488,14 @@ if (
                 (o = parseFloat(o, 10)),
                 (r = parseFloat(r, 10));
             } else (o = i.top), (r = i.left);
-            return (t += o), (n += r), { top: t, left: n };
+            return (
+              (t += o),
+              (n += r),
+              {
+                top: t,
+                left: n,
+              }
+            );
           }
         },
       }),
@@ -6960,7 +7598,11 @@ if (
         function o() {
           if (window.QUnit) return !1;
           var e = document.createElement("bootstrap");
-          for (var t in a) if (void 0 !== e.style[t]) return { end: a[t] };
+          for (var t in a)
+            if (void 0 !== e.style[t])
+              return {
+                end: a[t],
+              };
           return !1;
         }
         function r(t) {
@@ -7043,13 +7685,19 @@ if (
             i = "bs.alert",
             s = "." + i,
             a = e.fn[t],
-            l = { DISMISS: '[data-dismiss="alert"]' },
+            l = {
+              DISMISS: '[data-dismiss="alert"]',
+            },
             c = {
               CLOSE: "close" + s,
               CLOSED: "closed" + s,
               CLICK_DATA_API: "click" + s + ".data-api",
             },
-            u = { ALERT: "alert", FADE: "fade", SHOW: "show" },
+            u = {
+              ALERT: "alert",
+              FADE: "fade",
+              SHOW: "show",
+            },
             d = (function () {
               function t(e) {
                 n(this, t), (this._element = e);
@@ -7134,7 +7782,11 @@ if (
             r = "." + i,
             s = ".data-api",
             a = e.fn[t],
-            l = { ACTIVE: "active", BUTTON: "btn", FOCUS: "focus" },
+            l = {
+              ACTIVE: "active",
+              BUTTON: "btn",
+              FOCUS: "focus",
+            },
             c = {
               DATA_TOGGLE_CARROT: '[data-toggle^="button"]',
               DATA_TOGGLE: '[data-toggle="buttons"]',
@@ -7234,7 +7886,12 @@ if (
               pause: "(string|boolean)",
               wrap: "boolean",
             },
-            f = { NEXT: "next", PREV: "prev", LEFT: "left", RIGHT: "right" },
+            f = {
+              NEXT: "next",
+              PREV: "prev",
+              LEFT: "left",
+              RIGHT: "right",
+            },
             h = {
               SLIDE: "slide" + a,
               SLID: "slid" + a,
@@ -7392,7 +8049,10 @@ if (
                     : this._items[s];
                 }),
                 (l.prototype._triggerSlideEvent = function (t, n) {
-                  var i = e.Event(h.SLIDE, { relatedTarget: t, direction: n });
+                  var i = e.Event(h.SLIDE, {
+                    relatedTarget: t,
+                    direction: n,
+                  });
                   return e(this._element).trigger(i), i;
                 }),
                 (l.prototype._setActiveIndicatorElement = function (t) {
@@ -7428,7 +8088,10 @@ if (
                     (this._isSliding = !0),
                       a && this.pause(),
                       this._setActiveIndicatorElement(s);
-                    var d = e.Event(h.SLID, { relatedTarget: s, direction: u });
+                    var d = e.Event(h.SLID, {
+                      relatedTarget: s,
+                      direction: u,
+                    });
                     r.supportsTransitionEnd() &&
                     e(this._element).hasClass(p.SLIDE)
                       ? (e(s).addClass(c),
@@ -7526,8 +8189,14 @@ if (
             s = "bs.collapse",
             a = "." + s,
             l = e.fn[t],
-            c = { toggle: !0, parent: "" },
-            u = { toggle: "boolean", parent: "string" },
+            c = {
+              toggle: !0,
+              parent: "",
+            },
+            u = {
+              toggle: "boolean",
+              parent: "string",
+            },
             d = {
               SHOW: "show" + a,
               SHOWN: "shown" + a,
@@ -7541,7 +8210,10 @@ if (
               COLLAPSING: "collapsing",
               COLLAPSED: "collapsed",
             },
-            h = { WIDTH: "width", HEIGHT: "height" },
+            h = {
+              WIDTH: "width",
+              HEIGHT: "height",
+            },
             p = {
               ACTIVES: ".card > .show, .card > .collapsing",
               DATA_TOGGLE: '[data-toggle="collapse"]',
@@ -7824,7 +8496,9 @@ if (
                       e(o).insertBefore(this),
                       e(o).on("click", t._clearMenus);
                   }
-                  var r = { relatedTarget: this },
+                  var r = {
+                      relatedTarget: this,
+                    },
                     s = e.Event(c.SHOW, r);
                   return (
                     e(n).trigger(s),
@@ -7867,7 +8541,9 @@ if (
                       r++
                     ) {
                       var s = t._getParentFromElement(o[r]),
-                        a = { relatedTarget: o[r] };
+                        a = {
+                          relatedTarget: o[r],
+                        };
                       if (
                         e(s).hasClass(u.SHOW) &&
                         !(
@@ -7952,7 +8628,12 @@ if (
             s = "bs.modal",
             a = "." + s,
             l = e.fn[t],
-            c = { backdrop: !0, keyboard: !0, focus: !0, show: !0 },
+            c = {
+              backdrop: !0,
+              keyboard: !0,
+              focus: !0,
+              show: !0,
+            },
             u = {
               backdrop: "(boolean|string)",
               keyboard: "boolean",
@@ -8011,7 +8692,9 @@ if (
                   r.supportsTransitionEnd() &&
                     e(this._element).hasClass(f.FADE) &&
                     (this._isTransitioning = !0);
-                  var i = e.Event(d.SHOW, { relatedTarget: t });
+                  var i = e.Event(d.SHOW, {
+                    relatedTarget: t,
+                  });
                   e(this._element).trigger(i),
                     this._isShown ||
                       i.isDefaultPrevented() ||
@@ -8097,7 +8780,9 @@ if (
                     i && r.reflow(this._element),
                     e(this._element).addClass(f.SHOW),
                     this._config.focus && this._enforceFocus();
-                  var o = e.Event(d.SHOWN, { relatedTarget: t }),
+                  var o = e.Event(d.SHOWN, {
+                      relatedTarget: t,
+                    }),
                     s = function () {
                       n._config.focus && n._element.focus(),
                         (n._isTransitioning = !1),
@@ -8305,7 +8990,11 @@ if (
             s = "bs.scrollspy",
             a = "." + s,
             l = e.fn[t],
-            c = { offset: 10, method: "auto", target: "" },
+            c = {
+              offset: 10,
+              method: "auto",
+              target: "",
+            },
             u = {
               offset: "number",
               method: "string",
@@ -8334,7 +9023,10 @@ if (
               DROPDOWN_ITEMS: ".dropdown-item",
               DROPDOWN_TOGGLE: ".dropdown-toggle",
             },
-            p = { OFFSET: "offset", POSITION: "position" },
+            p = {
+              OFFSET: "offset",
+              POSITION: "position",
+            },
             g = (function () {
               function l(t, i) {
                 var o = this;
@@ -8586,8 +9278,12 @@ if (
                     o &&
                       ((i = e.makeArray(e(o).find(u.ACTIVE))),
                       (i = i[i.length - 1]));
-                    var a = e.Event(l.HIDE, { relatedTarget: this._element }),
-                      d = e.Event(l.SHOW, { relatedTarget: i });
+                    var a = e.Event(l.HIDE, {
+                        relatedTarget: this._element,
+                      }),
+                      d = e.Event(l.SHOW, {
+                        relatedTarget: i,
+                      });
                     if (
                       (i && e(i).trigger(a),
                       e(this._element).trigger(d),
@@ -8598,7 +9294,9 @@ if (
                         var n = e.Event(l.HIDDEN, {
                             relatedTarget: t._element,
                           }),
-                          o = e.Event(l.SHOWN, { relatedTarget: i });
+                          o = e.Event(l.SHOWN, {
+                            relatedTarget: i,
+                          });
                         e(i).trigger(n), e(t._element).trigger(o);
                       };
                       n ? this._activate(n, n.parentNode, f) : f();
@@ -8721,7 +9419,10 @@ if (
               BOTTOM: "top center",
               LEFT: "middle right",
             },
-            f = { SHOW: "show", OUT: "out" },
+            f = {
+              SHOW: "show",
+              OUT: "out",
+            },
             h = {
               HIDE: "hide" + a,
               HIDDEN: "hidden" + a,
@@ -8734,9 +9435,18 @@ if (
               MOUSEENTER: "mouseenter" + a,
               MOUSELEAVE: "mouseleave" + a,
             },
-            p = { FADE: "fade", SHOW: "show" },
-            g = { TOOLTIP: ".tooltip", TOOLTIP_INNER: ".tooltip-inner" },
-            m = { element: !1, enabled: !1 },
+            p = {
+              FADE: "fade",
+              SHOW: "show",
+            },
+            g = {
+              TOOLTIP: ".tooltip",
+              TOOLTIP_INNER: ".tooltip-inner",
+            },
+            m = {
+              element: !1,
+              enabled: !1,
+            },
             v = {
               HOVER: "hover",
               FOCUS: "focus",
@@ -9052,7 +9762,10 @@ if (
                       n
                     )).delay &&
                       "number" == typeof n.delay &&
-                      (n.delay = { show: n.delay, hide: n.delay }),
+                      (n.delay = {
+                        show: n.delay,
+                        hide: n.delay,
+                      }),
                     r.typeCheckConfig(t, n, this.constructor.DefaultType),
                     n
                   );
@@ -9151,8 +9864,14 @@ if (
         f = r.extend({}, s.DefaultType, {
           content: "(string|element|function)",
         }),
-        h = { FADE: "fade", SHOW: "show" },
-        p = { TITLE: ".popover-title", CONTENT: ".popover-content" },
+        h = {
+          FADE: "fade",
+          SHOW: "show",
+        },
+        p = {
+          TITLE: ".popover-title",
+          CONTENT: ".popover-content",
+        },
         g = {
           HIDE: "hide" + c,
           HIDDEN: "hidden" + c,
@@ -9271,7 +9990,9 @@ if (
   })(this, function (e, t) {
     "use strict";
     function n(t) {
-      var n = e("<div></div>").css({ width: "100%" });
+      var n = e("<div></div>").css({
+        width: "100%",
+      });
       t.append(n);
       var i = t.width() - n.width();
       return n.remove(), i;
@@ -9282,7 +10003,13 @@ if (
         l = s.bottom,
         c = s.left,
         u = s.right,
-        d = e.extend({ tolerance: 0, viewport: t }, r),
+        d = e.extend(
+          {
+            tolerance: 0,
+            viewport: t,
+          },
+          r
+        ),
         f = !1,
         h = d.viewport.jquery ? d.viewport : e(d.viewport);
       h.length ||
@@ -9382,7 +10109,11 @@ if (
     return (function (e) {
       function t(i) {
         if (n[i]) return n[i].exports;
-        var o = (n[i] = { exports: {}, id: i, loaded: !1 });
+        var o = (n[i] = {
+          exports: {},
+          id: i,
+          loaded: !1,
+        });
         return (
           e[i].call(o.exports, o, o.exports, t), (o.loaded = !0), o.exports
         );
@@ -9393,7 +10124,11 @@ if (
       function (e, t, n) {
         "use strict";
         function i(e) {
-          return e && e.__esModule ? e : { default: e };
+          return e && e.__esModule
+            ? e
+            : {
+                default: e,
+              };
         }
         var o =
             Object.assign ||
@@ -9535,7 +10270,11 @@ if (
             i(n) &&
               ((o = "leading" in n ? !!n.leading : o),
               (a = "trailing" in n ? !!n.trailing : a)),
-            r(e, t, { leading: o, maxWait: t, trailing: a })
+            r(e, t, {
+              leading: o,
+              maxWait: t,
+              trailing: a,
+            })
           );
         };
       },
@@ -9678,13 +10417,18 @@ if (
               (s = t[a]).ready || ((s.ready = !0), e.fn.call(s, s));
           }
         }
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         var i = window.document,
           o = window.MutationObserver || window.WebKitMutationObserver,
           r = [],
           s = void 0;
         t.default = function (e, t) {
-          r.push({ selector: e, fn: t }),
+          r.push({
+            selector: e,
+            fn: t,
+          }),
             !s &&
               o &&
               (s = new o(n)).observe(i.documentElement, {
@@ -9701,7 +10445,9 @@ if (
           if (!(e instanceof t))
             throw new TypeError("Cannot call a class as a function");
         }
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         var i = (function () {
             function e(e, t) {
               for (var n = 0; n < t.length; n++) {
@@ -9776,7 +10522,9 @@ if (
       },
       function (e, t) {
         "use strict";
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         var n = function (e, t, n) {
           var i = e.node.getAttribute("data-aos-once");
           t > e.position
@@ -9795,9 +10543,15 @@ if (
       },
       function (e, t, n) {
         "use strict";
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         var i = (function (e) {
-          return e && e.__esModule ? e : { default: e };
+          return e && e.__esModule
+            ? e
+            : {
+                default: e,
+              };
         })(n(11));
         t.default = function (e, t) {
           return (
@@ -9811,9 +10565,15 @@ if (
       },
       function (e, t, n) {
         "use strict";
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         var i = (function (e) {
-          return e && e.__esModule ? e : { default: e };
+          return e && e.__esModule
+            ? e
+            : {
+                default: e,
+              };
         })(n(12));
         t.default = function (e, t) {
           var n = 0,
@@ -9863,7 +10623,9 @@ if (
       },
       function (e, t) {
         "use strict";
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         t.default = function (e) {
           for (
             var t = 0, n = 0;
@@ -9873,18 +10635,25 @@ if (
             (t += e.offsetLeft - ("BODY" != e.tagName ? e.scrollLeft : 0)),
               (n += e.offsetTop - ("BODY" != e.tagName ? e.scrollTop : 0)),
               (e = e.offsetParent);
-          return { top: n, left: t };
+          return {
+            top: n,
+            left: t,
+          };
         };
       },
       function (e, t) {
         "use strict";
-        Object.defineProperty(t, "__esModule", { value: !0 });
+        Object.defineProperty(t, "__esModule", {
+          value: !0,
+        });
         t.default = function (e) {
           e = e || document.querySelectorAll("[data-aos]");
           var t = [];
           return (
             [].forEach.call(e, function (e, n) {
-              t.push({ node: e });
+              t.push({
+                node: e,
+              });
             }),
             t
           );
@@ -9933,7 +10702,10 @@ if (
               thisEl.find(".seconds").text(seconds));
       }
       thisEl = e(this);
-      var o = { date: null, format: null };
+      var o = {
+        date: null,
+        format: null,
+      };
       t && e.extend(o, t), i(), (interval = setInterval(i, 1e3));
     };
   })(jQuery),
@@ -10084,9 +10856,13 @@ if (
     })()).prototype.activateADA = function () {
       this.$slideTrack
         .find(".slick-active")
-        .attr({ "aria-hidden": "false" })
+        .attr({
+          "aria-hidden": "false",
+        })
         .find("a, input, button, select")
-        .attr({ tabindex: "0" });
+        .attr({
+          tabindex: "0",
+        });
     }),
       (t.prototype.addSlide = t.prototype.slickAdd =
         function (t, n, i) {
@@ -10120,7 +10896,12 @@ if (
           !1 === e.options.vertical
         ) {
           var t = e.$slides.eq(e.currentSlide).outerHeight(!0);
-          e.$list.animate({ height: t }, e.options.speed);
+          e.$list.animate(
+            {
+              height: t,
+            },
+            e.options.speed
+          );
         }
       }),
       (t.prototype.animateSlide = function (t, n) {
@@ -10131,21 +10912,29 @@ if (
           !1 === o.transformsEnabled
             ? !1 === o.options.vertical
               ? o.$slideTrack.animate(
-                  { left: t },
+                  {
+                    left: t,
+                  },
                   o.options.speed,
                   o.options.easing,
                   n
                 )
               : o.$slideTrack.animate(
-                  { top: t },
+                  {
+                    top: t,
+                  },
                   o.options.speed,
                   o.options.easing,
                   n
                 )
             : !1 === o.cssTransitions
             ? (!0 === o.options.rtl && (o.currentLeft = -o.currentLeft),
-              e({ animStart: o.currentLeft }).animate(
-                { animStart: t },
+              e({
+                animStart: o.currentLeft,
+              }).animate(
+                {
+                  animStart: t,
+                },
                 {
                   duration: o.options.speed,
                   easing: o.options.easing,
@@ -10248,10 +11037,10 @@ if (
                 t.$prevArrow
                   .addClass("slick-disabled")
                   .attr("aria-disabled", "true"))
-            : t.$prevArrow
-                .add(t.$nextArrow)
-                .addClass("slick-hidden")
-                .attr({ "aria-disabled": "true", tabindex: "-1" }));
+            : t.$prevArrow.add(t.$nextArrow).addClass("slick-hidden").attr({
+                "aria-disabled": "true",
+                tabindex: "-1",
+              }));
       }),
       (t.prototype.buildDots = function () {
         var t,
@@ -10564,12 +11353,22 @@ if (
       (t.prototype.fadeSlide = function (e, t) {
         var n = this;
         !1 === n.cssTransitions
-          ? (n.$slides.eq(e).css({ zIndex: n.options.zIndex }),
-            n.$slides
-              .eq(e)
-              .animate({ opacity: 1 }, n.options.speed, n.options.easing, t))
+          ? (n.$slides.eq(e).css({
+              zIndex: n.options.zIndex,
+            }),
+            n.$slides.eq(e).animate(
+              {
+                opacity: 1,
+              },
+              n.options.speed,
+              n.options.easing,
+              t
+            ))
           : (n.applyTransition(e),
-            n.$slides.eq(e).css({ opacity: 1, zIndex: n.options.zIndex }),
+            n.$slides.eq(e).css({
+              opacity: 1,
+              zIndex: n.options.zIndex,
+            }),
             t &&
               setTimeout(function () {
                 n.disableTransition(e), t.call();
@@ -10578,15 +11377,19 @@ if (
       (t.prototype.fadeSlideOut = function (e) {
         var t = this;
         !1 === t.cssTransitions
-          ? t.$slides
-              .eq(e)
-              .animate(
-                { opacity: 0, zIndex: t.options.zIndex - 2 },
-                t.options.speed,
-                t.options.easing
-              )
+          ? t.$slides.eq(e).animate(
+              {
+                opacity: 0,
+                zIndex: t.options.zIndex - 2,
+              },
+              t.options.speed,
+              t.options.easing
+            )
           : (t.applyTransition(e),
-            t.$slides.eq(e).css({ opacity: 0, zIndex: t.options.zIndex - 2 }));
+            t.$slides.eq(e).css({
+              opacity: 0,
+              zIndex: t.options.zIndex - 2,
+            }));
       }),
       (t.prototype.filterSlides = t.prototype.slickFilter =
         function (e) {
@@ -10784,7 +11587,12 @@ if (
       (t.prototype.goTo = t.prototype.slickGoTo =
         function (e, t) {
           this.changeSlide(
-            { data: { message: "index", index: parseInt(e) } },
+            {
+              data: {
+                message: "index",
+                index: parseInt(e),
+              },
+            },
             t
           );
         }),
@@ -10814,9 +11622,14 @@ if (
           });
         t.$slides
           .add(t.$slideTrack.find(".slick-cloned"))
-          .attr({ "aria-hidden": "true", tabindex: "-1" })
+          .attr({
+            "aria-hidden": "true",
+            tabindex: "-1",
+          })
           .find("a, input, button, select")
-          .attr({ tabindex: "-1" }),
+          .attr({
+            tabindex: "-1",
+          }),
           null !== t.$dots &&
             (t.$slides
               .not(t.$slideTrack.find(".slick-cloned"))
@@ -10838,7 +11651,9 @@ if (
               .find("li")
               .each(function (o) {
                 var r = i[o];
-                e(this).attr({ role: "presentation" }),
+                e(this).attr({
+                  role: "presentation",
+                }),
                   e(this)
                     .find("button")
                     .first()
@@ -10853,7 +11668,10 @@ if (
               })
               .eq(t.currentSlide)
               .find("button")
-              .attr({ "aria-selected": "true", tabindex: "0" })
+              .attr({
+                "aria-selected": "true",
+                tabindex: "0",
+              })
               .end());
         for (var o = t.currentSlide, r = o + t.options.slidesToShow; o < r; o++)
           t.$slides.eq(o).attr("tabindex", 0);
@@ -10863,12 +11681,20 @@ if (
         var e = this;
         !0 === e.options.arrows &&
           e.slideCount > e.options.slidesToShow &&
-          (e.$prevArrow
-            .off("click.slick")
-            .on("click.slick", { message: "previous" }, e.changeSlide),
-          e.$nextArrow
-            .off("click.slick")
-            .on("click.slick", { message: "next" }, e.changeSlide),
+          (e.$prevArrow.off("click.slick").on(
+            "click.slick",
+            {
+              message: "previous",
+            },
+            e.changeSlide
+          ),
+          e.$nextArrow.off("click.slick").on(
+            "click.slick",
+            {
+              message: "next",
+            },
+            e.changeSlide
+          ),
           !0 === e.options.accessibility &&
             (e.$prevArrow.on("keydown.slick", e.keyHandler),
             e.$nextArrow.on("keydown.slick", e.keyHandler)));
@@ -10878,7 +11704,9 @@ if (
         !0 === t.options.dots &&
           (e("li", t.$dots).on(
             "click.slick",
-            { message: "index" },
+            {
+              message: "index",
+            },
             t.changeSlide
           ),
           !0 === t.options.accessibility &&
@@ -10902,22 +11730,30 @@ if (
           t.initSlideEvents(),
           t.$list.on(
             "touchstart.slick mousedown.slick",
-            { action: "start" },
+            {
+              action: "start",
+            },
             t.swipeHandler
           ),
           t.$list.on(
             "touchmove.slick mousemove.slick",
-            { action: "move" },
+            {
+              action: "move",
+            },
             t.swipeHandler
           ),
           t.$list.on(
             "touchend.slick mouseup.slick",
-            { action: "end" },
+            {
+              action: "end",
+            },
             t.swipeHandler
           ),
           t.$list.on(
             "touchcancel.slick mouseleave.slick",
-            { action: "end" },
+            {
+              action: "end",
+            },
             t.swipeHandler
           ),
           t.$list.on("click.slick", t.clickHandler),
@@ -10955,12 +11791,16 @@ if (
         e.target.tagName.match("TEXTAREA|INPUT|SELECT") ||
           (37 === e.keyCode && !0 === t.options.accessibility
             ? t.changeSlide({
-                data: { message: !0 === t.options.rtl ? "next" : "previous" },
+                data: {
+                  message: !0 === t.options.rtl ? "next" : "previous",
+                },
               })
             : 39 === e.keyCode &&
               !0 === t.options.accessibility &&
               t.changeSlide({
-                data: { message: !0 === t.options.rtl ? "previous" : "next" },
+                data: {
+                  message: !0 === t.options.rtl ? "previous" : "next",
+                },
               }));
       }),
       (t.prototype.lazyLoad = function () {
@@ -10972,15 +11812,27 @@ if (
               o = e(this).attr("data-sizes") || r.$slider.attr("data-sizes"),
               s = document.createElement("img");
             (s.onload = function () {
-              t.animate({ opacity: 0 }, 100, function () {
-                i && (t.attr("srcset", i), o && t.attr("sizes", o)),
-                  t.attr("src", n).animate({ opacity: 1 }, 200, function () {
-                    t.removeAttr(
-                      "data-lazy data-srcset data-sizes"
-                    ).removeClass("slick-loading");
-                  }),
-                  r.$slider.trigger("lazyLoaded", [r, t, n]);
-              });
+              t.animate(
+                {
+                  opacity: 0,
+                },
+                100,
+                function () {
+                  i && (t.attr("srcset", i), o && t.attr("sizes", o)),
+                    t.attr("src", n).animate(
+                      {
+                        opacity: 1,
+                      },
+                      200,
+                      function () {
+                        t.removeAttr(
+                          "data-lazy data-srcset data-sizes"
+                        ).removeClass("slick-loading");
+                      }
+                    ),
+                    r.$slider.trigger("lazyLoaded", [r, t, n]);
+                }
+              );
             }),
               (s.onerror = function () {
                 t
@@ -11043,14 +11895,20 @@ if (
       (t.prototype.loadSlider = function () {
         var e = this;
         e.setPosition(),
-          e.$slideTrack.css({ opacity: 1 }),
+          e.$slideTrack.css({
+            opacity: 1,
+          }),
           e.$slider.removeClass("slick-loading"),
           e.initUI(),
           "progressive" === e.options.lazyLoad && e.progressiveLazyLoad();
       }),
       (t.prototype.next = t.prototype.slickNext =
         function () {
-          this.changeSlide({ data: { message: "next" } });
+          this.changeSlide({
+            data: {
+              message: "next",
+            },
+          });
         }),
       (t.prototype.orientationChange = function () {
         var e = this;
@@ -11085,7 +11943,11 @@ if (
       }),
       (t.prototype.prev = t.prototype.slickPrev =
         function () {
-          this.changeSlide({ data: { message: "previous" } });
+          this.changeSlide({
+            data: {
+              message: "previous",
+            },
+          });
         }),
       (t.prototype.preventDefault = function (e) {
         e.preventDefault();
@@ -11138,9 +12000,20 @@ if (
           o.slideCount <= o.options.slidesToShow && (o.currentSlide = 0),
           (n = o.currentSlide),
           o.destroy(!0),
-          e.extend(o, o.initials, { currentSlide: n }),
+          e.extend(o, o.initials, {
+            currentSlide: n,
+          }),
           o.init(),
-          t || o.changeSlide({ data: { message: "index", index: n } }, !1);
+          t ||
+            o.changeSlide(
+              {
+                data: {
+                  message: "index",
+                  index: n,
+                },
+              },
+              !1
+            );
       }),
       (t.prototype.registerBreakpoints = function () {
         var t,
@@ -11254,12 +12127,16 @@ if (
         var e = this;
         !1 === e.options.vertical
           ? !0 === e.options.centerMode &&
-            e.$list.css({ padding: "0px " + e.options.centerPadding })
+            e.$list.css({
+              padding: "0px " + e.options.centerPadding,
+            })
           : (e.$list.height(
               e.$slides.first().outerHeight(!0) * e.options.slidesToShow
             ),
             !0 === e.options.centerMode &&
-              e.$list.css({ padding: e.options.centerPadding + " 0px" })),
+              e.$list.css({
+                padding: e.options.centerPadding + " 0px",
+              })),
           (e.listWidth = e.$list.width()),
           (e.listHeight = e.$list.height()),
           !1 === e.options.vertical && !1 === e.options.variableWidth
@@ -11303,9 +12180,10 @@ if (
                   opacity: 0,
                 });
         }),
-          n.$slides
-            .eq(n.currentSlide)
-            .css({ zIndex: n.options.zIndex - 1, opacity: 1 });
+          n.$slides.eq(n.currentSlide).css({
+            zIndex: n.options.zIndex - 1,
+            opacity: 1,
+          });
       }),
       (t.prototype.setHeight = function () {
         var e = this;
@@ -11899,7 +12777,10 @@ var ssc_framerate = 150,
   ssc_keyboardsupport = !0,
   ssc_arrowscroll = 50,
   ssc_frame = !1,
-  ssc_direction = { x: 0, y: 0 },
+  ssc_direction = {
+    x: 0,
+    y: 0,
+  },
   ssc_initdone = !1,
   ssc_fixedback = !0,
   ssc_root = document.documentElement,
@@ -11921,100 +12802,1219 @@ var ssc_framerate = 150,
 setInterval(function () {
   ssc_cache = {};
 }, 1e4);
-
-$(function () {
-  "use strict";
-  $.validator.setDefaults({
-    ignore: [],
-    highlight: function (e) {
-      $(e).closest(".form-group").addClass("has-danger"),
-        $(e).addClass("form-control-danger");
-    },
-    unhighlight: function (e) {
-      $(e).closest(".form-group").removeClass("has-danger"),
-        $(e).removeClass("form-control-danger");
-    },
-    errorElement: "div",
-    errorClass: "form-control-feedback",
-    errorPlacement: function (e, t) {
-      t.parent(".input-group").length || t.parent("label").length;
-    },
-  });
-  var e = $("#phpcontactform"),
-    t = $("#js-contact-btn"),
-    n = $("#js-contact-result");
-  e.submit(function (e) {
-    e.preventDefault();
-  }).validate({
-    rules: {
-      name: "required",
-      email: { required: !0, email: !0 },
-      message: "required",
-    },
-    messages: {
-      name: "Your first name please",
-      email: "We need your email address",
-      message: "Please enter your message",
-    },
-    submitHandler: function (i) {
-      t.attr("disabled", !0);
-      var o = e.data("redirect"),
-        r = !1;
-      ("none" != o && "" != o && null != o) || (r = !0),
-        n.html('<p class="help-block">Please wait...</p>');
-      var s = n.data("success-msg"),
-        a = n.data("error-msg"),
-        l = $(i).serialize();
-      return (
-        $.ajax({
-          type: "POST",
-          data: l,
-          url: "php/contact.php",
-          cache: !1,
-          success: function (i) {
-            "success" == i
-              ? r
-                ? (e[0].reset(),
-                  n
+var ssc_uniqueID = (function () {
+    var e = 0;
+    return function (t) {
+      return t.ssc_uniqueID || (t.ssc_uniqueID = e++);
+    };
+  })(),
+  ischrome = /chrome/.test(navigator.userAgent.toLowerCase());
+ischrome &&
+  (ssc_addEvent("mousedown", ssc_mousedown),
+  ssc_addEvent("mousewheel", ssc_wheel),
+  ssc_addEvent("load", ssc_init)),
+  (function (e) {
+    "function" == typeof define && define.amd
+      ? define(["jquery"], e)
+      : e(jQuery);
+  })(function (e) {
+    e.extend(e.fn, {
+      validate: function (t) {
+        if (this.length) {
+          var n = e.data(this[0], "validator");
+          return (
+            n ||
+            (this.attr("novalidate", "novalidate"),
+            (n = new e.validator(t, this[0])),
+            e.data(this[0], "validator", n),
+            n.settings.onsubmit &&
+              (this.validateDelegate(":submit", "click", function (t) {
+                n.settings.submitHandler && (n.submitButton = t.target),
+                  e(t.target).hasClass("cancel") && (n.cancelSubmit = !0),
+                  void 0 !== e(t.target).attr("formnovalidate") &&
+                    (n.cancelSubmit = !0);
+              }),
+              this.submit(function (t) {
+                function i() {
+                  var i, o;
+                  return (
+                    !n.settings.submitHandler ||
+                    (n.submitButton &&
+                      (i = e("<input type='hidden'/>")
+                        .attr("name", n.submitButton.name)
+                        .val(e(n.submitButton).val())
+                        .appendTo(n.currentForm)),
+                    (o = n.settings.submitHandler.call(n, n.currentForm, t)),
+                    n.submitButton && i.remove(),
+                    void 0 !== o && o)
+                  );
+                }
+                return (
+                  n.settings.debug && t.preventDefault(),
+                  n.cancelSubmit
+                    ? ((n.cancelSubmit = !1), i())
+                    : n.form()
+                    ? n.pendingRequest
+                      ? ((n.formSubmitted = !0), !1)
+                      : i()
+                    : (n.focusInvalid(), !1)
+                );
+              })),
+            n)
+          );
+        }
+        t &&
+          t.debug &&
+          window.console &&
+          console.warn("Nothing selected, can't validate, returning nothing.");
+      },
+      valid: function () {
+        var t, n;
+        return (
+          e(this[0]).is("form")
+            ? (t = this.validate().form())
+            : ((t = !0),
+              (n = e(this[0].form).validate()),
+              this.each(function () {
+                t = n.element(this) && t;
+              })),
+          t
+        );
+      },
+      removeAttrs: function (t) {
+        var n = {},
+          i = this;
+        return (
+          e.each(t.split(/\s/), function (e, t) {
+            (n[t] = i.attr(t)), i.removeAttr(t);
+          }),
+          n
+        );
+      },
+      rules: function (t, n) {
+        var i,
+          o,
+          r,
+          s,
+          a,
+          l,
+          c = this[0];
+        if (t)
+          switch (
+            ((i = e.data(c.form, "validator").settings),
+            (o = i.rules),
+            (r = e.validator.staticRules(c)),
+            t)
+          ) {
+            case "add":
+              e.extend(r, e.validator.normalizeRule(n)),
+                delete r.messages,
+                (o[c.name] = r),
+                n.messages &&
+                  (i.messages[c.name] = e.extend(
+                    i.messages[c.name],
+                    n.messages
+                  ));
+              break;
+            case "remove":
+              return n
+                ? ((l = {}),
+                  e.each(n.split(/\s/), function (t, n) {
+                    (l[n] = r[n]),
+                      delete r[n],
+                      "required" === n && e(c).removeAttr("aria-required");
+                  }),
+                  l)
+                : (delete o[c.name], r);
+          }
+        return (
+          (s = e.validator.normalizeRules(
+            e.extend(
+              {},
+              e.validator.classRules(c),
+              e.validator.attributeRules(c),
+              e.validator.dataRules(c),
+              e.validator.staticRules(c)
+            ),
+            c
+          )).required &&
+            ((a = s.required),
+            delete s.required,
+            (s = e.extend(
+              {
+                required: a,
+              },
+              s
+            )),
+            e(c).attr("aria-required", "true")),
+          s.remote &&
+            ((a = s.remote),
+            delete s.remote,
+            (s = e.extend(s, {
+              remote: a,
+            }))),
+          s
+        );
+      },
+    }),
+      e.extend(e.expr[":"], {
+        blank: function (t) {
+          return !e.trim("" + e(t).val());
+        },
+        filled: function (t) {
+          return !!e.trim("" + e(t).val());
+        },
+        unchecked: function (t) {
+          return !e(t).prop("checked");
+        },
+      }),
+      (e.validator = function (t, n) {
+        (this.settings = e.extend(!0, {}, e.validator.defaults, t)),
+          (this.currentForm = n),
+          this.init();
+      }),
+      (e.validator.format = function (t, n) {
+        return 1 === arguments.length
+          ? function () {
+              var n = e.makeArray(arguments);
+              return n.unshift(t), e.validator.format.apply(this, n);
+            }
+          : (arguments.length > 2 &&
+              n.constructor !== Array &&
+              (n = e.makeArray(arguments).slice(1)),
+            n.constructor !== Array && (n = [n]),
+            e.each(n, function (e, n) {
+              t = t.replace(new RegExp("\\{" + e + "\\}", "g"), function () {
+                return n;
+              });
+            }),
+            t);
+      }),
+      e.extend(e.validator, {
+        defaults: {
+          messages: {},
+          groups: {},
+          rules: {},
+          errorClass: "error",
+          validClass: "valid",
+          errorElement: "label",
+          focusCleanup: !1,
+          focusInvalid: !0,
+          errorContainer: e([]),
+          errorLabelContainer: e([]),
+          onsubmit: !0,
+          ignore: ":hidden",
+          ignoreTitle: !1,
+          onfocusin: function (e) {
+            (this.lastActive = e),
+              this.settings.focusCleanup &&
+                (this.settings.unhighlight &&
+                  this.settings.unhighlight.call(
+                    this,
+                    e,
+                    this.settings.errorClass,
+                    this.settings.validClass
+                  ),
+                this.hideThese(this.errorsFor(e)));
+          },
+          onfocusout: function (e) {
+            this.checkable(e) ||
+              (!(e.name in this.submitted) && this.optional(e)) ||
+              this.element(e);
+          },
+          onkeyup: function (e, t) {
+            (9 === t.which && "" === this.elementValue(e)) ||
+              ((e.name in this.submitted || e === this.lastElement) &&
+                this.element(e));
+          },
+          onclick: function (e) {
+            e.name in this.submitted
+              ? this.element(e)
+              : e.parentNode.name in this.submitted &&
+                this.element(e.parentNode);
+          },
+          highlight: function (t, n, i) {
+            "radio" === t.type
+              ? this.findByName(t.name).addClass(n).removeClass(i)
+              : e(t).addClass(n).removeClass(i);
+          },
+          unhighlight: function (t, n, i) {
+            "radio" === t.type
+              ? this.findByName(t.name).removeClass(n).addClass(i)
+              : e(t).removeClass(n).addClass(i);
+          },
+        },
+        setDefaults: function (t) {
+          e.extend(e.validator.defaults, t);
+        },
+        messages: {
+          required: "This field is required.",
+          remote: "Please fix this field.",
+          email: "Please enter a valid email address.",
+          url: "Please enter a valid URL.",
+          date: "Please enter a valid date.",
+          dateISO: "Please enter a valid date ( ISO ).",
+          number: "Please enter a valid number.",
+          digits: "Please enter only digits.",
+          creditcard: "Please enter a valid credit card number.",
+          equalTo: "Please enter the same value again.",
+          maxlength: e.validator.format(
+            "Please enter no more than {0} characters."
+          ),
+          minlength: e.validator.format(
+            "Please enter at least {0} characters."
+          ),
+          rangelength: e.validator.format(
+            "Please enter a value between {0} and {1} characters long."
+          ),
+          range: e.validator.format(
+            "Please enter a value between {0} and {1}."
+          ),
+          max: e.validator.format(
+            "Please enter a value less than or equal to {0}."
+          ),
+          min: e.validator.format(
+            "Please enter a value greater than or equal to {0}."
+          ),
+        },
+        autoCreateRanges: !1,
+        prototype: {
+          init: function () {
+            function t(t) {
+              var n = e.data(this[0].form, "validator"),
+                i = "on" + t.type.replace(/^validate/, ""),
+                o = n.settings;
+              o[i] && !this.is(o.ignore) && o[i].call(n, this[0], t);
+            }
+            (this.labelContainer = e(this.settings.errorLabelContainer)),
+              (this.errorContext =
+                (this.labelContainer.length && this.labelContainer) ||
+                e(this.currentForm)),
+              (this.containers = e(this.settings.errorContainer).add(
+                this.settings.errorLabelContainer
+              )),
+              (this.submitted = {}),
+              (this.valueCache = {}),
+              (this.pendingRequest = 0),
+              (this.pending = {}),
+              (this.invalid = {}),
+              this.reset();
+            var n,
+              i = (this.groups = {});
+            e.each(this.settings.groups, function (t, n) {
+              "string" == typeof n && (n = n.split(/\s/)),
+                e.each(n, function (e, n) {
+                  i[n] = t;
+                });
+            }),
+              (n = this.settings.rules),
+              e.each(n, function (t, i) {
+                n[t] = e.validator.normalizeRule(i);
+              }),
+              e(this.currentForm)
+                .validateDelegate(
+                  ":text, [type='password'], [type='file'], select, textarea, [type='number'], [type='search'] ,[type='tel'], [type='url'], [type='email'], [type='datetime'], [type='date'], [type='month'], [type='week'], [type='time'], [type='datetime-local'], [type='range'], [type='color'], [type='radio'], [type='checkbox']",
+                  "focusin focusout keyup",
+                  t
+                )
+                .validateDelegate(
+                  "select, option, [type='radio'], [type='checkbox']",
+                  "click",
+                  t
+                ),
+              this.settings.invalidHandler &&
+                e(this.currentForm).bind(
+                  "invalid-form.validate",
+                  this.settings.invalidHandler
+                ),
+              e(this.currentForm)
+                .find("[required], [data-rule-required], .required")
+                .attr("aria-required", "true");
+          },
+          form: function () {
+            return (
+              this.checkForm(),
+              e.extend(this.submitted, this.errorMap),
+              (this.invalid = e.extend({}, this.errorMap)),
+              this.valid() ||
+                e(this.currentForm).triggerHandler("invalid-form", [this]),
+              this.showErrors(),
+              this.valid()
+            );
+          },
+          checkForm: function () {
+            this.prepareForm();
+            for (
+              var e = 0, t = (this.currentElements = this.elements());
+              t[e];
+              e++
+            )
+              this.check(t[e]);
+            return this.valid();
+          },
+          element: function (t) {
+            var n = this.clean(t),
+              i = this.validationTargetFor(n),
+              o = !0;
+            return (
+              (this.lastElement = i),
+              void 0 === i
+                ? delete this.invalid[n.name]
+                : (this.prepareElement(i),
+                  (this.currentElements = e(i)),
+                  (o = !1 !== this.check(i))
+                    ? delete this.invalid[i.name]
+                    : (this.invalid[i.name] = !0)),
+              e(t).attr("aria-invalid", !o),
+              this.numberOfInvalids() ||
+                (this.toHide = this.toHide.add(this.containers)),
+              this.showErrors(),
+              o
+            );
+          },
+          showErrors: function (t) {
+            if (t) {
+              e.extend(this.errorMap, t), (this.errorList = []);
+              for (var n in t)
+                this.errorList.push({
+                  message: t[n],
+                  element: this.findByName(n)[0],
+                });
+              this.successList = e.grep(this.successList, function (e) {
+                return !(e.name in t);
+              });
+            }
+            this.settings.showErrors
+              ? this.settings.showErrors.call(
+                  this,
+                  this.errorMap,
+                  this.errorList
+                )
+              : this.defaultShowErrors();
+          },
+          resetForm: function () {
+            e.fn.resetForm && e(this.currentForm).resetForm(),
+              (this.submitted = {}),
+              (this.lastElement = null),
+              this.prepareForm(),
+              this.hideErrors(),
+              this.elements()
+                .removeClass(this.settings.errorClass)
+                .removeData("previousValue")
+                .removeAttr("aria-invalid");
+          },
+          numberOfInvalids: function () {
+            return this.objectLength(this.invalid);
+          },
+          objectLength: function (e) {
+            var t,
+              n = 0;
+            for (t in e) n++;
+            return n;
+          },
+          hideErrors: function () {
+            this.hideThese(this.toHide);
+          },
+          hideThese: function (e) {
+            e.not(this.containers).text(""), this.addWrapper(e).hide();
+          },
+          valid: function () {
+            return 0 === this.size();
+          },
+          size: function () {
+            return this.errorList.length;
+          },
+          focusInvalid: function () {
+            if (this.settings.focusInvalid)
+              try {
+                e(
+                  this.findLastActive() ||
+                    (this.errorList.length && this.errorList[0].element) ||
+                    []
+                )
+                  .filter(":visible")
+                  .focus()
+                  .trigger("focusin");
+              } catch (e) {}
+          },
+          findLastActive: function () {
+            var t = this.lastActive;
+            return (
+              t &&
+              1 ===
+                e.grep(this.errorList, function (e) {
+                  return e.element.name === t.name;
+                }).length &&
+              t
+            );
+          },
+          elements: function () {
+            var t = this,
+              n = {};
+            return e(this.currentForm)
+              .find("input, select, textarea")
+              .not(":submit, :reset, :image, [disabled], [readonly]")
+              .not(this.settings.ignore)
+              .filter(function () {
+                return (
+                  !this.name &&
+                    t.settings.debug &&
+                    window.console &&
+                    console.error("%o has no name assigned", this),
+                  !(this.name in n || !t.objectLength(e(this).rules())) &&
+                    ((n[this.name] = !0), !0)
+                );
+              });
+          },
+          clean: function (t) {
+            return e(t)[0];
+          },
+          errors: function () {
+            var t = this.settings.errorClass.split(" ").join(".");
+            return e(this.settings.errorElement + "." + t, this.errorContext);
+          },
+          reset: function () {
+            (this.successList = []),
+              (this.errorList = []),
+              (this.errorMap = {}),
+              (this.toShow = e([])),
+              (this.toHide = e([])),
+              (this.currentElements = e([]));
+          },
+          prepareForm: function () {
+            this.reset(), (this.toHide = this.errors().add(this.containers));
+          },
+          prepareElement: function (e) {
+            this.reset(), (this.toHide = this.errorsFor(e));
+          },
+          elementValue: function (t) {
+            var n,
+              i = e(t),
+              o = t.type;
+            return "radio" === o || "checkbox" === o
+              ? e("input[name='" + t.name + "']:checked").val()
+              : "number" === o && void 0 !== t.validity
+              ? !t.validity.badInput && i.val()
+              : "string" == typeof (n = i.val())
+              ? n.replace(/\r/g, "")
+              : n;
+          },
+          check: function (t) {
+            t = this.validationTargetFor(this.clean(t));
+            var n,
+              i,
+              o,
+              r = e(t).rules(),
+              s = e.map(r, function (e, t) {
+                return t;
+              }).length,
+              a = !1,
+              l = this.elementValue(t);
+            for (i in r) {
+              o = {
+                method: i,
+                parameters: r[i],
+              };
+              try {
+                if (
+                  "dependency-mismatch" ===
+                    (n = e.validator.methods[i].call(
+                      this,
+                      l,
+                      t,
+                      o.parameters
+                    )) &&
+                  1 === s
+                ) {
+                  a = !0;
+                  continue;
+                }
+                if (((a = !1), "pending" === n))
+                  return void (this.toHide = this.toHide.not(
+                    this.errorsFor(t)
+                  ));
+                if (!n) return this.formatAndAdd(t, o), !1;
+              } catch (e) {
+                throw (
+                  (this.settings.debug &&
+                    window.console &&
+                    console.log(
+                      "Exception occurred when checking element " +
+                        t.id +
+                        ", check the '" +
+                        o.method +
+                        "' method.",
+                      e
+                    ),
+                  e)
+                );
+              }
+            }
+            if (!a) return this.objectLength(r) && this.successList.push(t), !0;
+          },
+          customDataMessage: function (t, n) {
+            return (
+              e(t).data(
+                "msg" + n.charAt(0).toUpperCase() + n.substring(1).toLowerCase()
+              ) || e(t).data("msg")
+            );
+          },
+          customMessage: function (e, t) {
+            var n = this.settings.messages[e];
+            return n && (n.constructor === String ? n : n[t]);
+          },
+          findDefined: function () {
+            for (var e = 0; e < arguments.length; e++)
+              if (void 0 !== arguments[e]) return arguments[e];
+          },
+          defaultMessage: function (t, n) {
+            return this.findDefined(
+              this.customMessage(t.name, n),
+              this.customDataMessage(t, n),
+              (!this.settings.ignoreTitle && t.title) || void 0,
+              e.validator.messages[n],
+              "<strong>Warning: No message defined for " + t.name + "</strong>"
+            );
+          },
+          formatAndAdd: function (t, n) {
+            var i = this.defaultMessage(t, n.method),
+              o = /\$?\{(\d+)\}/g;
+            "function" == typeof i
+              ? (i = i.call(this, n.parameters, t))
+              : o.test(i) &&
+                (i = e.validator.format(i.replace(o, "{$1}"), n.parameters)),
+              this.errorList.push({
+                message: i,
+                element: t,
+                method: n.method,
+              }),
+              (this.errorMap[t.name] = i),
+              (this.submitted[t.name] = i);
+          },
+          addWrapper: function (e) {
+            return (
+              this.settings.wrapper &&
+                (e = e.add(e.parent(this.settings.wrapper))),
+              e
+            );
+          },
+          defaultShowErrors: function () {
+            var e, t, n;
+            for (e = 0; this.errorList[e]; e++)
+              (n = this.errorList[e]),
+                this.settings.highlight &&
+                  this.settings.highlight.call(
+                    this,
+                    n.element,
+                    this.settings.errorClass,
+                    this.settings.validClass
+                  ),
+                this.showLabel(n.element, n.message);
+            if (
+              (this.errorList.length &&
+                (this.toShow = this.toShow.add(this.containers)),
+              this.settings.success)
+            )
+              for (e = 0; this.successList[e]; e++)
+                this.showLabel(this.successList[e]);
+            if (this.settings.unhighlight)
+              for (e = 0, t = this.validElements(); t[e]; e++)
+                this.settings.unhighlight.call(
+                  this,
+                  t[e],
+                  this.settings.errorClass,
+                  this.settings.validClass
+                );
+            (this.toHide = this.toHide.not(this.toShow)),
+              this.hideErrors(),
+              this.addWrapper(this.toShow).show();
+          },
+          validElements: function () {
+            return this.currentElements.not(this.invalidElements());
+          },
+          invalidElements: function () {
+            return e(this.errorList).map(function () {
+              return this.element;
+            });
+          },
+          showLabel: function (t, n) {
+            var i,
+              o,
+              r,
+              s = this.errorsFor(t),
+              a = this.idOrName(t),
+              l = e(t).attr("aria-describedby");
+            s.length
+              ? (s
+                  .removeClass(this.settings.validClass)
+                  .addClass(this.settings.errorClass),
+                s.html(n))
+              : ((i = s =
+                  e("<" + this.settings.errorElement + ">")
+                    .attr("id", a + "-error")
+                    .addClass(this.settings.errorClass)
+                    .html(n || "")),
+                this.settings.wrapper &&
+                  (i = s
+                    .hide()
+                    .show()
+                    .wrap("<" + this.settings.wrapper + "/>")
+                    .parent()),
+                this.labelContainer.length
+                  ? this.labelContainer.append(i)
+                  : this.settings.errorPlacement
+                  ? this.settings.errorPlacement(i, e(t))
+                  : i.insertAfter(t),
+                s.is("label")
+                  ? s.attr("for", a)
+                  : 0 === s.parents("label[for='" + a + "']").length &&
+                    ((r = s.attr("id").replace(/(:|\.|\[|\])/g, "\\$1")),
+                    l
+                      ? l.match(new RegExp("\\b" + r + "\\b")) || (l += " " + r)
+                      : (l = r),
+                    e(t).attr("aria-describedby", l),
+                    (o = this.groups[t.name]) &&
+                      e.each(this.groups, function (t, n) {
+                        n === o &&
+                          e("[name='" + t + "']", this.currentForm).attr(
+                            "aria-describedby",
+                            s.attr("id")
+                          );
+                      }))),
+              !n &&
+                this.settings.success &&
+                (s.text(""),
+                "string" == typeof this.settings.success
+                  ? s.addClass(this.settings.success)
+                  : this.settings.success(s, t)),
+              (this.toShow = this.toShow.add(s));
+          },
+          errorsFor: function (t) {
+            var n = this.idOrName(t),
+              i = e(t).attr("aria-describedby"),
+              o = "label[for='" + n + "'], label[for='" + n + "'] *";
+            return (
+              i && (o = o + ", #" + i.replace(/\s+/g, ", #")),
+              this.errors().filter(o)
+            );
+          },
+          idOrName: function (e) {
+            return (
+              this.groups[e.name] ||
+              (this.checkable(e) ? e.name : e.id || e.name)
+            );
+          },
+          validationTargetFor: function (t) {
+            return (
+              this.checkable(t) && (t = this.findByName(t.name)),
+              e(t).not(this.settings.ignore)[0]
+            );
+          },
+          checkable: function (e) {
+            return /radio|checkbox/i.test(e.type);
+          },
+          findByName: function (t) {
+            return e(this.currentForm).find("[name='" + t + "']");
+          },
+          getLength: function (t, n) {
+            switch (n.nodeName.toLowerCase()) {
+              case "select":
+                return e("option:selected", n).length;
+              case "input":
+                if (this.checkable(n))
+                  return this.findByName(n.name).filter(":checked").length;
+            }
+            return t.length;
+          },
+          depend: function (e, t) {
+            return (
+              !this.dependTypes[typeof e] || this.dependTypes[typeof e](e, t)
+            );
+          },
+          dependTypes: {
+            boolean: function (e) {
+              return e;
+            },
+            string: function (t, n) {
+              return !!e(t, n.form).length;
+            },
+            function: function (e, t) {
+              return e(t);
+            },
+          },
+          optional: function (t) {
+            var n = this.elementValue(t);
+            return (
+              !e.validator.methods.required.call(this, n, t) &&
+              "dependency-mismatch"
+            );
+          },
+          startRequest: function (e) {
+            this.pending[e.name] ||
+              (this.pendingRequest++, (this.pending[e.name] = !0));
+          },
+          stopRequest: function (t, n) {
+            --this.pendingRequest < 0 && (this.pendingRequest = 0),
+              delete this.pending[t.name],
+              n &&
+              0 === this.pendingRequest &&
+              this.formSubmitted &&
+              this.form()
+                ? (e(this.currentForm).submit(), (this.formSubmitted = !1))
+                : !n &&
+                  0 === this.pendingRequest &&
+                  this.formSubmitted &&
+                  (e(this.currentForm).triggerHandler("invalid-form", [this]),
+                  (this.formSubmitted = !1));
+          },
+          previousValue: function (t) {
+            return (
+              e.data(t, "previousValue") ||
+              e.data(t, "previousValue", {
+                old: null,
+                valid: !0,
+                message: this.defaultMessage(t, "remote"),
+              })
+            );
+          },
+        },
+        classRuleSettings: {
+          required: {
+            required: !0,
+          },
+          email: {
+            email: !0,
+          },
+          url: {
+            url: !0,
+          },
+          date: {
+            date: !0,
+          },
+          dateISO: {
+            dateISO: !0,
+          },
+          number: {
+            number: !0,
+          },
+          digits: {
+            digits: !0,
+          },
+          creditcard: {
+            creditcard: !0,
+          },
+        },
+        addClassRules: function (t, n) {
+          t.constructor === String
+            ? (this.classRuleSettings[t] = n)
+            : e.extend(this.classRuleSettings, t);
+        },
+        classRules: function (t) {
+          var n = {},
+            i = e(t).attr("class");
+          return (
+            i &&
+              e.each(i.split(" "), function () {
+                this in e.validator.classRuleSettings &&
+                  e.extend(n, e.validator.classRuleSettings[this]);
+              }),
+            n
+          );
+        },
+        attributeRules: function (t) {
+          var n,
+            i,
+            o = {},
+            r = e(t),
+            s = t.getAttribute("type");
+          for (n in e.validator.methods)
+            "required" === n
+              ? ("" === (i = t.getAttribute(n)) && (i = !0), (i = !!i))
+              : (i = r.attr(n)),
+              /min|max/.test(n) &&
+                (null === s || /number|range|text/.test(s)) &&
+                (i = Number(i)),
+              i || 0 === i
+                ? (o[n] = i)
+                : s === n && "range" !== s && (o[n] = !0);
+          return (
+            o.maxlength &&
+              /-1|2147483647|524288/.test(o.maxlength) &&
+              delete o.maxlength,
+            o
+          );
+        },
+        dataRules: function (t) {
+          var n,
+            i,
+            o = {},
+            r = e(t);
+          for (n in e.validator.methods)
+            void 0 !==
+              (i = r.data(
+                "rule" +
+                  n.charAt(0).toUpperCase() +
+                  n.substring(1).toLowerCase()
+              )) && (o[n] = i);
+          return o;
+        },
+        staticRules: function (t) {
+          var n = {},
+            i = e.data(t.form, "validator");
+          return (
+            i.settings.rules &&
+              (n = e.validator.normalizeRule(i.settings.rules[t.name]) || {}),
+            n
+          );
+        },
+        normalizeRules: function (t, n) {
+          return (
+            e.each(t, function (i, o) {
+              if (!1 !== o) {
+                if (o.param || o.depends) {
+                  var r = !0;
+                  switch (typeof o.depends) {
+                    case "string":
+                      r = !!e(o.depends, n.form).length;
+                      break;
+                    case "function":
+                      r = o.depends.call(n, n);
+                  }
+                  r ? (t[i] = void 0 === o.param || o.param) : delete t[i];
+                }
+              } else delete t[i];
+            }),
+            e.each(t, function (i, o) {
+              t[i] = e.isFunction(o) ? o(n) : o;
+            }),
+            e.each(["minlength", "maxlength"], function () {
+              t[this] && (t[this] = Number(t[this]));
+            }),
+            e.each(["rangelength", "range"], function () {
+              var n;
+              t[this] &&
+                (e.isArray(t[this])
+                  ? (t[this] = [Number(t[this][0]), Number(t[this][1])])
+                  : "string" == typeof t[this] &&
+                    ((n = t[this].replace(/[\[\]]/g, "").split(/[\s,]+/)),
+                    (t[this] = [Number(n[0]), Number(n[1])])));
+            }),
+            e.validator.autoCreateRanges &&
+              (null != t.min &&
+                null != t.max &&
+                ((t.range = [t.min, t.max]), delete t.min, delete t.max),
+              null != t.minlength &&
+                null != t.maxlength &&
+                ((t.rangelength = [t.minlength, t.maxlength]),
+                delete t.minlength,
+                delete t.maxlength)),
+            t
+          );
+        },
+        normalizeRule: function (t) {
+          if ("string" == typeof t) {
+            var n = {};
+            e.each(t.split(/\s/), function () {
+              n[this] = !0;
+            }),
+              (t = n);
+          }
+          return t;
+        },
+        addMethod: function (t, n, i) {
+          (e.validator.methods[t] = n),
+            (e.validator.messages[t] =
+              void 0 !== i ? i : e.validator.messages[t]),
+            n.length < 3 &&
+              e.validator.addClassRules(t, e.validator.normalizeRule(t));
+        },
+        methods: {
+          required: function (t, n, i) {
+            if (!this.depend(i, n)) return "dependency-mismatch";
+            if ("select" === n.nodeName.toLowerCase()) {
+              var o = e(n).val();
+              return o && o.length > 0;
+            }
+            return this.checkable(n)
+              ? this.getLength(t, n) > 0
+              : e.trim(t).length > 0;
+          },
+          email: function (e, t) {
+            return (
+              this.optional(t) ||
+              /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(
+                e
+              )
+            );
+          },
+          url: function (e, t) {
+            return (
+              this.optional(t) ||
+              /^(https?|s?ftp):\/\/(((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:)*@)?(((\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])\.(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5]))|((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.?)(:\d*)?)(\/((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)+(\/(([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)*)*)?)?(\?((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|[\uE000-\uF8FF]|\/|\?)*)?(#((([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(%[\da-f]{2})|[!\$&'\(\)\*\+,;=]|:|@)|\/|\?)*)?$/i.test(
+                e
+              )
+            );
+          },
+          date: function (e, t) {
+            return (
+              this.optional(t) || !/Invalid|NaN/.test(new Date(e).toString())
+            );
+          },
+          dateISO: function (e, t) {
+            return (
+              this.optional(t) ||
+              /^\d{4}[\/\-](0?[1-9]|1[012])[\/\-](0?[1-9]|[12][0-9]|3[01])$/.test(
+                e
+              )
+            );
+          },
+          number: function (e, t) {
+            return (
+              this.optional(t) ||
+              /^-?(?:\d+|\d{1,3}(?:,\d{3})+)?(?:\.\d+)?$/.test(e)
+            );
+          },
+          digits: function (e, t) {
+            return this.optional(t) || /^\d+$/.test(e);
+          },
+          creditcard: function (e, t) {
+            if (this.optional(t)) return "dependency-mismatch";
+            if (/[^0-9 \-]+/.test(e)) return !1;
+            var n,
+              i,
+              o = 0,
+              r = 0,
+              s = !1;
+            if ((e = e.replace(/\D/g, "")).length < 13 || e.length > 19)
+              return !1;
+            for (n = e.length - 1; n >= 0; n--)
+              (i = e.charAt(n)),
+                (r = parseInt(i, 10)),
+                s && (r *= 2) > 9 && (r -= 9),
+                (o += r),
+                (s = !s);
+            return o % 10 == 0;
+          },
+          minlength: function (t, n, i) {
+            var o = e.isArray(t) ? t.length : this.getLength(t, n);
+            return this.optional(n) || o >= i;
+          },
+          maxlength: function (t, n, i) {
+            var o = e.isArray(t) ? t.length : this.getLength(t, n);
+            return this.optional(n) || o <= i;
+          },
+          rangelength: function (t, n, i) {
+            var o = e.isArray(t) ? t.length : this.getLength(t, n);
+            return this.optional(n) || (o >= i[0] && o <= i[1]);
+          },
+          min: function (e, t, n) {
+            return this.optional(t) || e >= n;
+          },
+          max: function (e, t, n) {
+            return this.optional(t) || e <= n;
+          },
+          range: function (e, t, n) {
+            return this.optional(t) || (e >= n[0] && e <= n[1]);
+          },
+          equalTo: function (t, n, i) {
+            var o = e(i);
+            return (
+              this.settings.onfocusout &&
+                o
+                  .unbind(".validate-equalTo")
+                  .bind("blur.validate-equalTo", function () {
+                    e(n).valid();
+                  }),
+              t === o.val()
+            );
+          },
+          remote: function (t, n, i) {
+            if (this.optional(n)) return "dependency-mismatch";
+            var o,
+              r,
+              s = this.previousValue(n);
+            return (
+              this.settings.messages[n.name] ||
+                (this.settings.messages[n.name] = {}),
+              (s.originalMessage = this.settings.messages[n.name].remote),
+              (this.settings.messages[n.name].remote = s.message),
+              (i =
+                ("string" == typeof i && {
+                  url: i,
+                }) ||
+                i),
+              s.old === t
+                ? s.valid
+                : ((s.old = t),
+                  (o = this),
+                  this.startRequest(n),
+                  (r = {}),
+                  (r[n.name] = t),
+                  e.ajax(
+                    e.extend(
+                      !0,
+                      {
+                        url: i,
+                        mode: "abort",
+                        port: "validate" + n.name,
+                        dataType: "json",
+                        data: r,
+                        context: o.currentForm,
+                        success: function (i) {
+                          var r,
+                            a,
+                            l,
+                            c = !0 === i || "true" === i;
+                          (o.settings.messages[n.name].remote =
+                            s.originalMessage),
+                            c
+                              ? ((l = o.formSubmitted),
+                                o.prepareElement(n),
+                                (o.formSubmitted = l),
+                                o.successList.push(n),
+                                delete o.invalid[n.name],
+                                o.showErrors())
+                              : ((r = {}),
+                                (a = i || o.defaultMessage(n, "remote")),
+                                (r[n.name] = s.message =
+                                  e.isFunction(a) ? a(t) : a),
+                                (o.invalid[n.name] = !0),
+                                o.showErrors(r)),
+                            (s.valid = c),
+                            o.stopRequest(n, c);
+                        },
+                      },
+                      i
+                    )
+                  ),
+                  "pending")
+            );
+          },
+        },
+      }),
+      (e.format = function () {
+        throw "$.format has been deprecated. Please use $.validator.format instead.";
+      });
+    var t,
+      n = {};
+    e.ajaxPrefilter
+      ? e.ajaxPrefilter(function (e, t, i) {
+          var o = e.port;
+          "abort" === e.mode && (n[o] && n[o].abort(), (n[o] = i));
+        })
+      : ((t = e.ajax),
+        (e.ajax = function (i) {
+          var o = ("mode" in i ? i : e.ajaxSettings).mode,
+            r = ("port" in i ? i : e.ajaxSettings).port;
+          return "abort" === o
+            ? (n[r] && n[r].abort(), (n[r] = t.apply(this, arguments)), n[r])
+            : t.apply(this, arguments);
+        })),
+      e.extend(e.fn, {
+        validateDelegate: function (t, n, i) {
+          return this.bind(n, function (n) {
+            var o = e(n.target);
+            if (o.is(t)) return i.apply(o, arguments);
+          });
+        },
+      });
+  }),
+  $(function () {
+    "use strict";
+    $.validator.setDefaults({
+      ignore: [],
+      highlight: function (e) {
+        $(e).closest(".form-group").addClass("has-danger"),
+          $(e).addClass("form-control-danger");
+      },
+      unhighlight: function (e) {
+        $(e).closest(".form-group").removeClass("has-danger"),
+          $(e).removeClass("form-control-danger");
+      },
+      errorElement: "div",
+      errorClass: "form-control-feedback",
+      errorPlacement: function (e, t) {
+        t.parent(".input-group").length || t.parent("label").length;
+      },
+    });
+    var e = $("#phpcontactform"),
+      t = $("#js-contact-btn"),
+      n = $("#js-contact-result");
+    e.submit(function (e) {
+      e.preventDefault();
+    }).validate({
+      rules: {
+        name: "required",
+        email: {
+          required: !0,
+          email: !0,
+        },
+        message: "required",
+      },
+      messages: {
+        name: "Your first name please",
+        email: "We need your email address",
+        message: "Please enter your message",
+      },
+      submitHandler: function (i) {
+        t.attr("disabled", !0);
+        var o = e.data("redirect"),
+          r = !1;
+        ("none" != o && "" != o && null != o) || (r = !0),
+          n.html('<p class="help-block">Please wait...</p>');
+        var s = n.data("success-msg"),
+          a = n.data("error-msg"),
+          l = $(i).serialize();
+        return (
+          $.ajax({
+            type: "POST",
+            data: l,
+            url: "php/contact.php",
+            cache: !1,
+            success: function (i) {
+              "success" == i
+                ? r
+                  ? (e[0].reset(),
+                    n
+                      .fadeIn("slow")
+                      .html(
+                        '<div class="mt-3 help-block text-success">' +
+                          s +
+                          "</div>"
+                      )
+                      .delay(3e3)
+                      .fadeOut("slow"))
+                  : (window.location.href = o)
+                : (n
                     .fadeIn("slow")
                     .html(
-                      '<div class="mt-3 help-block text-success">' +
-                        s +
-                        "</div>"
+                      '<div class="mt-3 help-block text-danger">' + a + "</div>"
                     )
                     .delay(3e3)
-                    .fadeOut("slow"))
-                : (window.location.href = o)
-              : (n
-                  .fadeIn("slow")
-                  .html(
-                    '<div class="mt-3 help-block text-danger">' + a + "</div>"
-                  )
-                  .delay(3e3)
-                  .fadeOut("slow"),
-                window.console && console.log("PHP Error: " + i)),
-              t.attr("disabled", !1);
-          },
-          error: function (e) {
-            n
-              .fadeIn("slow")
-              .html(
-                '<div class="mt-3 help-block text-danger"> Cannot access Server</div>'
-              )
-              .delay(3e3)
-              .fadeOut("slow"),
-              t.attr("disabled", !1),
-              window.console &&
-                console.error(
-                  "JS Error: Please make sure you are running on a PHP Server"
-                );
-          },
-        }),
-        !1
-      );
-    },
-  });
-}),
+                    .fadeOut("slow"),
+                  window.console && console.log("PHP Error: " + i)),
+                t.attr("disabled", !1);
+            },
+            error: function (e) {
+              n
+                .fadeIn("slow")
+                .html(
+                  '<div class="mt-3 help-block text-danger"> Cannot access Server</div>'
+                )
+                .delay(3e3)
+                .fadeOut("slow"),
+                t.attr("disabled", !1),
+                window.console &&
+                  console.error(
+                    "JS Error: Please make sure you are running on a PHP Server"
+                  );
+            },
+          }),
+          !1
+        );
+      },
+    });
+  }),
   $(function () {
     "use strict";
     $.validator.setDefaults({
@@ -12038,8 +14038,15 @@ $(function () {
           e.preventDefault();
         })
         .validate({
-          rules: { email: { required: !0, email: !0 } },
-          messages: { email: "Please enter your email address" },
+          rules: {
+            email: {
+              required: !0,
+              email: !0,
+            },
+          },
+          messages: {
+            email: "Please enter your email address",
+          },
           submitHandler: function (e) {
             var t = $("#js-subscribe-btn"),
               n = $("#js-subscribe-result");
@@ -12099,10 +14106,51 @@ $(function () {
           },
         });
   });
-
+var $scrollable = $("#fscontent");
+$(function () {
+  "use strict";
+  $(".hamburger").on("click", function () {
+    $("body").toggleClass("sidebar-open"),
+      setTimeout(function () {
+        $scrollable
+          .find(".aos-init:not(.aos-animate):in-viewport")
+          .addClass("aos-animate");
+      }, 1200);
+  }),
+    $scrollable.on("scroll", function () {
+      $scrollable
+        .find(".aos-init:not(.aos-animate):in-viewport")
+        .addClass("aos-animate");
+    }),
+    $("input, textarea").keyup(function () {
+      "" == $(this).val()
+        ? $(this).siblings("label").removeClass("active")
+        : $(this).siblings("label").addClass("active");
+    }),
+    $("#bg-slider").length &&
+      $.fn.slick &&
+      ($("#bg-slider").slick({
+        arrows: !1,
+        autoplay: !0,
+        fade: !0,
+        dots: !0,
+        appendDots: $(".wrapper"),
+        speed: 1e3,
+        autoplaySpeed: 5e3,
+      }),
+      $(".slick-slide .img-holder").height($(window).height()));
+  var e = $("#countdown");
+  if (e.length && $.fn.countdown) {
+    var t = e.data("event-date");
+    t &&
+      e.countdown({
+        date: t,
+        format: "on",
+      });
+  }
+}),
 $(window).on("load", function () {
   AOS.init({ duration: 1200 }),
-
     $("#bg-slider").length &&
       $.fn.slick &&
       ($(".slick-slide .img-holder").height($(window).height()),
