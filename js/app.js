@@ -14149,16 +14149,16 @@ $(function () {
       });
   }
 }),
-$(window).on("load", function () {
-  AOS.init({ duration: 1200 }),
-    $("#bg-slider").length &&
-      $.fn.slick &&
-      ($(".slick-slide .img-holder").height($(window).height()),
-      $(window).on("resize", function () {
-        $(".slick-slide .img-holder").height($(window).height());
-      })),
-    $scrollable.find(".aos-init").removeClass("aos-animate");
-});
+  $(window).on("load", function () {
+    AOS.init({ duration: 1200 }),
+      $("#bg-slider").length &&
+        $.fn.slick &&
+        ($(".slick-slide .img-holder").height($(window).height()),
+        $(window).on("resize", function () {
+          $(".slick-slide .img-holder").height($(window).height());
+        })),
+      $scrollable.find(".aos-init").removeClass("aos-animate");
+  });
 
 window.onload = function () {
   function updateVideoSource() {
@@ -14166,16 +14166,28 @@ window.onload = function () {
     const source = document.getElementById("videoSource");
 
     if (window.innerWidth <= 576) {
-      source.src = "./source/mobile-version.webm";
+      source.src =
+        "./source/Gen_3_Alpha_Turbo_3256521574,_It_is_necessary_that,_DALL·E_2024.webm";
       video.style.top = "unset";
       video.style.left = "unset";
       video.style.transform = "unset";
+      // video.addEventListener("ended", function () {
+      //   video.currentTime = 0;
+      //   video.play();
+      // });
+      video.play().catch((error) => {
+        console.error("Error attempting to play video:", error);
+      });
     } else {
       source.src =
         "./source/Gen_3_Alpha_Turbo_2348255986,_Do_the_action_inside,_imagepng_51.webm";
       video.style.top = "50%";
       video.style.left = "50%";
       video.style.transform = "translate(-50%, -50%)";
+      video.addEventListener("ended", function () {
+        video.currentTime = 0;
+        video.play();
+      });
     }
 
     video.load();
