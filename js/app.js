@@ -14167,7 +14167,7 @@ window.onload = function () {
 
     if (window.innerWidth <= 576) {
       source.src =
-        "./source/Gen_3_Alpha_Turbo_3256521574,_It_is_necessary_that,_DALL·E_2024.mp4";
+        "./source/mobile-version.mp4";
       video.style.top = "unset";
       video.style.left = "unset";
       video.style.transform = "unset";
@@ -14177,7 +14177,7 @@ window.onload = function () {
       });
     } else {
       source.src =
-        "./source/Gen_3_Alpha_Turbo_2348255986,_Do_the_action_inside,_imagepng_51.webm";
+        "./source/desktop-version.mp4";
       video.style.top = "50%";
       video.style.left = "50%";
       video.style.transform = "translate(-50%, -50%)";
