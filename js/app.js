@@ -14167,16 +14167,13 @@ window.onload = function () {
 
     if (window.innerWidth <= 576) {
       source.src =
-        "./source/Gen_3_Alpha_Turbo_3256521574,_It_is_necessary_that,_DALL·E_2024.webm";
+        "./source/Gen_3_Alpha_Turbo_3256521574,_It_is_necessary_that,_DALL·E_2024.mp4";
       video.style.top = "unset";
       video.style.left = "unset";
       video.style.transform = "unset";
-      // video.addEventListener("ended", function () {
-      //   video.currentTime = 0;
-      //   video.play();
-      // });
-      video.play().catch((error) => {
-        console.error("Error attempting to play video:", error);
+      video.addEventListener("ended", function () {
+        video.currentTime = 0;
+        video.play();
       });
     } else {
       source.src =
