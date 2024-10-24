@@ -14166,7 +14166,7 @@ $(function () {
 
     if (window.innerWidth <= 576) {
       video.src =
-        "./source/mobile-version.mp4";
+        "./source/mobile-version2.mp4";
       video.style.top = "unset";
       video.style.left = "unset";
       video.style.transform = "unset";
