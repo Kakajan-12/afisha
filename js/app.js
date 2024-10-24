@@ -14163,10 +14163,10 @@ $(function () {
 window.onload = function () {
   function updateVideoSource() {
     const video = document.getElementById("responsiveVideo");
-    const source = document.getElementById("videoSource");
+    // const source = document.getElementById("videoSource");
 
     if (window.innerWidth <= 576) {
-      source.src =
+      video.src =
         "./source/mobile-version.mp4";
       video.style.top = "unset";
       video.style.left = "unset";
@@ -14176,7 +14176,7 @@ window.onload = function () {
         video.play();
       });
     } else {
-      source.src =
+      video.src =
         "./source/desktop-version.mp4";
       video.style.top = "50%";
       video.style.left = "50%";
