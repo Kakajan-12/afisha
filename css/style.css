@@ -1,3 +1,7 @@
+@font-face {
+  font-family: 'Oswald';
+  src: url('/fonts/Oswald-Regular.ttf') format('truetype')
+}
 html {
   font-family: sans-serif;
   line-height: 1.15;
@@ -11621,10 +11625,12 @@ label {
   display: block;
   width: 100%;
   font-size: clamp(16px, 5.5vw, 100px);
+  font-weight: 400;
 }
 
 .link-text{
 font-family: Oswald;
+font-weight: 400;
 }
 
 video::-webkit-media-controls {
