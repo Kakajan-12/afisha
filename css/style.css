@@ -11624,7 +11624,7 @@ label {
   font-family: Oswald;
   display: block;
   width: 100%;
-  font-size: clamp(16px, 5.5vw, 100px);
+  font-size: clamp(12px, 5.5vw, 100px);
   font-weight: 400;
 }
 

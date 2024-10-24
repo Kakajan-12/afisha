@@ -14160,7 +14160,6 @@ $(function () {
       $scrollable.find(".aos-init").removeClass("aos-animate");
   });
 
-window.onload = function () {
   function updateVideoSource() {
     const video = document.getElementById("responsiveVideo");
     // const source = document.getElementById("videoSource");
@@ -14193,4 +14192,3 @@ window.onload = function () {
   updateVideoSource();
 
   window.addEventListener("resize", updateVideoSource);
-};
