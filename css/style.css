@@ -10609,7 +10609,7 @@ a:hover {
   letter-spacing: 0;
 }
 .btn-lg {
-  padding: 1rem 2.5rem;
+  padding: 1rem 1.5rem;
 }
 .btn-primary,
 .btn-primary:focus {
@@ -11631,6 +11631,7 @@ label {
 .link-text{
 font-family: Oswald;
 font-weight: 400;
+margin: 0;
 }
 
 video::-webkit-media-controls {
