@@ -14185,7 +14185,6 @@ window.onload = function () {
 
   window.addEventListener("resize", updateVideoSource);
 
-  const getPath = window.location.href;
   function autoRedirect() {
     setTimeout(function () {
       window.location.href = "https://kakajan-12.github.io/afisha-2.0/";
