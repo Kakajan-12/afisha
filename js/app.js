@@ -14159,7 +14159,7 @@ window.onload = function () {
     // const source = document.getElementById("videoSource");
 
     if (window.innerWidth <= 576) {
-      video.src = "./source/mobile-version3.mp4";
+      video.src = "./source/mobile-version2.mp4";
       video.style.top = "unset";
       video.style.left = "unset";
       video.style.transform = "unset";
